@@ -9,7 +9,8 @@ namespace PodcastMetadataGenerator.UI;
 /// </summary>
 public class AppWorkflow
 {
-    private readonly AppSettings _settings;
+    private AppSettings _settings;
+    private readonly SettingsService _settingsService;
     private readonly TranscriptParser _parser;
     private readonly SrtConverter _srtConverter;
     private readonly OutputService _outputService;
@@ -21,6 +22,7 @@ public class AppWorkflow
     public AppWorkflow()
     {
         _settings = new AppSettings();
+        _settingsService = new SettingsService();
         _parser = new TranscriptParser(_settings);
         _srtConverter = new SrtConverter();
         _outputService = new OutputService();
@@ -31,6 +33,9 @@ public class AppWorkflow
     /// </summary>
     public async Task RunAsync(string[] args)
     {
+        // Load saved settings
+        await LoadSettingsAsync();
+        
         ConsoleUI.ShowHeader();
         
         // If transcript path provided as argument, load it directly
@@ -40,6 +45,30 @@ public class AppWorkflow
         }
         
         await MainMenuLoopAsync();
+    }
+    
+    private async Task LoadSettingsAsync()
+    {
+        try
+        {
+            _settings = await _settingsService.LoadAsync();
+        }
+        catch (Exception ex)
+        {
+            ConsoleUI.ShowWarning($"Could not load settings: {ex.Message}. Using defaults.");
+        }
+    }
+    
+    private async Task SaveSettingsAsync()
+    {
+        try
+        {
+            await _settingsService.SaveAsync(_settings);
+        }
+        catch (Exception ex)
+        {
+            ConsoleUI.ShowWarning($"Could not save settings: {ex.Message}");
+        }
     }
     
     private async Task MainMenuLoopAsync()
@@ -150,14 +179,18 @@ public class AppWorkflow
             ConsoleUI.ShowSuccess($"Loaded transcript: {Path.GetFileName(path)}");
             ConsoleUI.ShowTranscriptInfo(_transcript!);
             
-            // Prompt for episode context if not set
-            if (string.IsNullOrEmpty(_settings.EpisodeContext))
+            // Prompt for episode context based on settings
+            if (_settings.PromptForContextOnLoad)
             {
                 if (AnsiConsole.Confirm("Would you like to add episode context (guest names, topics, etc.)?", defaultValue: false))
                 {
                     _settings.EpisodeContext = ConsoleUI.AskText(
                         "Enter episode context:",
                         validator: _ => true);
+                }
+                else
+                {
+                    _settings.EpisodeContext = null;
                 }
             }
         }
@@ -544,34 +577,71 @@ public class AppWorkflow
         {
             AnsiConsole.WriteLine();
             
-            // Show current settings
-            var settingsTable = new Table()
+            // Show current settings grouped by category
+            var generalTable = new Table()
                 .RoundedBorder()
                 .BorderColor(Color.Blue)
-                .Title("[bold]Current Settings[/]")
+                .Title("[bold]General Settings[/]")
                 .HideHeaders()
                 .AddColumn("Setting")
                 .AddColumn("Value");
             
-            settingsTable.AddRow("[blue]Model[/]", Markup.Escape(_settings.Model));
-            settingsTable.AddRow("[blue]Output Directory[/]", Markup.Escape(_settings.OutputDirectory));
-            settingsTable.AddRow("[blue]Episode Context[/]", 
+            generalTable.AddRow("[blue]Model[/]", Markup.Escape(_settings.Model));
+            generalTable.AddRow("[blue]Output Directory[/]", Markup.Escape(_settings.OutputDirectory));
+            generalTable.AddRow("[blue]Podcast Name[/]", 
+                string.IsNullOrEmpty(_settings.PodcastName) 
+                    ? "[grey](not set)[/]" 
+                    : Markup.Escape(_settings.PodcastName));
+            generalTable.AddRow("[blue]Host Names[/]", 
+                string.IsNullOrEmpty(_settings.HostNames) 
+                    ? "[grey](not set)[/]" 
+                    : Markup.Escape(_settings.HostNames));
+            generalTable.AddRow("[blue]Prompt for Context[/]", _settings.PromptForContextOnLoad ? "[green]Yes[/]" : "[grey]No[/]");
+            generalTable.AddRow("[blue]Episode Context[/]", 
                 string.IsNullOrEmpty(_settings.EpisodeContext) 
                     ? "[grey](not set)[/]" 
-                    : Markup.Escape(_settings.EpisodeContext.Length > 50 
-                        ? _settings.EpisodeContext[..50] + "..." 
+                    : Markup.Escape(_settings.EpisodeContext.Length > 40 
+                        ? _settings.EpisodeContext[..40] + "..." 
                         : _settings.EpisodeContext));
             
-            AnsiConsole.Write(settingsTable);
+            AnsiConsole.Write(generalTable);
+            
+            var generationTable = new Table()
+                .RoundedBorder()
+                .BorderColor(Color.Yellow)
+                .Title("[bold]Generation Settings[/]")
+                .HideHeaders()
+                .AddColumn("Setting")
+                .AddColumn("Value");
+            
+            generationTable.AddRow("[yellow]Title Count[/]", $"{_settings.TitleCount} suggestions");
+            generationTable.AddRow("[yellow]Title Max Words[/]", $"{_settings.TitleMaxWords} words");
+            generationTable.AddRow("[yellow]Short Description[/]", $"~{_settings.ShortDescriptionWords} words");
+            generationTable.AddRow("[yellow]Medium Description[/]", $"~{_settings.MediumDescriptionWords} words");
+            generationTable.AddRow("[yellow]Long Description[/]", $"~{_settings.LongDescriptionWords} words");
+            generationTable.AddRow("[yellow]Chapter Range[/]", $"{_settings.MinChapters}-{_settings.MaxChapters} chapters");
+            generationTable.AddRow("[yellow]Chapters per 30min[/]", $"~{_settings.ChaptersPer30Min}");
+            generationTable.AddRow("[yellow]Chapter Title Words[/]", $"max {_settings.ChapterTitleMaxWords} words");
+            
+            AnsiConsole.Write(generationTable);
             
             var action = ConsoleUI.SelectFromList(
-                "[bold]Settings[/]",
-                new[] { "🤖 Change Model", "📁 Change Output Directory", "📝 Set Episode Context", "⬅️ Back to Main Menu" });
+                "[bold]Settings Menu[/]",
+                new[] 
+                { 
+                    "🤖 Change Model", 
+                    "📁 Change Output Directory", 
+                    "🎙️ Podcast Info (Name & Hosts)",
+                    "📝 Episode Context",
+                    "🔧 Generation Settings (Titles, Descriptions, Chapters)",
+                    "💾 Save Settings",
+                    "🔄 Reset to Defaults",
+                    "⬅️ Back to Main Menu" 
+                });
             
             switch (action)
             {
                 case "🤖 Change Model":
-                    // Fetch models from Copilot CLI
                     var models = await AnsiConsole.Status()
                         .Spinner(Spinner.Known.Dots)
                         .SpinnerStyle(Style.Parse("blue"))
@@ -593,16 +663,160 @@ public class AppWorkflow
                     ConsoleUI.ShowSuccess($"Output directory set to: {_settings.OutputDirectory}");
                     break;
                     
-                case "📝 Set Episode Context":
+                case "🎙️ Podcast Info (Name & Hosts)":
+                    EditPodcastInfo();
+                    break;
+                    
+                case "📝 Episode Context":
+                    _settings.PromptForContextOnLoad = AnsiConsole.Confirm(
+                        "Prompt for episode context when loading transcripts?",
+                        defaultValue: _settings.PromptForContextOnLoad);
+                    
                     _settings.EpisodeContext = ConsoleUI.AskText(
-                        "Enter episode context (guest names, topics, etc.):",
-                        defaultValue: _settings.EpisodeContext ?? "");
+                        "Enter default episode context (guest names, topics, etc.):",
+                        defaultValue: _settings.EpisodeContext ?? "",
+                        validator: _ => true);
                     if (string.IsNullOrWhiteSpace(_settings.EpisodeContext))
                         _settings.EpisodeContext = null;
-                    ConsoleUI.ShowSuccess("Episode context updated");
+                    ConsoleUI.ShowSuccess("Episode context settings updated");
+                    break;
+                    
+                case "🔧 Generation Settings (Titles, Descriptions, Chapters)":
+                    EditGenerationSettings();
+                    break;
+                    
+                case "💾 Save Settings":
+                    await SaveSettingsAsync();
+                    ConsoleUI.ShowSuccess($"Settings saved to: {SettingsService.GetSettingsPath()}");
+                    break;
+                    
+                case "🔄 Reset to Defaults":
+                    if (AnsiConsole.Confirm("Reset all settings to defaults?", defaultValue: false))
+                    {
+                        _settings = new AppSettings();
+                        ConsoleUI.ShowSuccess("Settings reset to defaults");
+                    }
                     break;
                     
                 case "⬅️ Back to Main Menu":
+                    // Auto-save on exit from settings
+                    await SaveSettingsAsync();
+                    return;
+            }
+        }
+    }
+    
+    private void EditPodcastInfo()
+    {
+        _settings.PodcastName = ConsoleUI.AskText(
+            "Enter podcast name (used in prompts for context):",
+            defaultValue: _settings.PodcastName ?? "",
+            validator: _ => true);
+        if (string.IsNullOrWhiteSpace(_settings.PodcastName))
+            _settings.PodcastName = null;
+        
+        _settings.HostNames = ConsoleUI.AskText(
+            "Enter host names (comma-separated, used in prompts):",
+            defaultValue: _settings.HostNames ?? "",
+            validator: _ => true);
+        if (string.IsNullOrWhiteSpace(_settings.HostNames))
+            _settings.HostNames = null;
+        
+        ConsoleUI.ShowSuccess("Podcast info updated");
+    }
+    
+    private void EditGenerationSettings()
+    {
+        while (true)
+        {
+            var action = ConsoleUI.SelectFromList(
+                "[bold]Generation Settings[/]",
+                new[]
+                {
+                    "📝 Title Settings",
+                    "📄 Description Lengths",
+                    "📑 Chapter Settings",
+                    "⬅️ Back"
+                });
+            
+            switch (action)
+            {
+                case "📝 Title Settings":
+                    _settings.TitleCount = AnsiConsole.Prompt(
+                        new TextPrompt<int>("Number of title suggestions to generate:")
+                            .DefaultValue(_settings.TitleCount)
+                            .Validate(n => n is >= 1 and <= 20 
+                                ? ValidationResult.Success() 
+                                : ValidationResult.Error("Must be between 1 and 20")));
+                    
+                    _settings.TitleMaxWords = AnsiConsole.Prompt(
+                        new TextPrompt<int>("Maximum words per title:")
+                            .DefaultValue(_settings.TitleMaxWords)
+                            .Validate(n => n is >= 3 and <= 25 
+                                ? ValidationResult.Success() 
+                                : ValidationResult.Error("Must be between 3 and 25")));
+                    
+                    ConsoleUI.ShowSuccess("Title settings updated");
+                    break;
+                    
+                case "📄 Description Lengths":
+                    _settings.ShortDescriptionWords = AnsiConsole.Prompt(
+                        new TextPrompt<int>("Short description word count:")
+                            .DefaultValue(_settings.ShortDescriptionWords)
+                            .Validate(n => n is >= 20 and <= 100 
+                                ? ValidationResult.Success() 
+                                : ValidationResult.Error("Must be between 20 and 100")));
+                    
+                    _settings.MediumDescriptionWords = AnsiConsole.Prompt(
+                        new TextPrompt<int>("Medium description word count:")
+                            .DefaultValue(_settings.MediumDescriptionWords)
+                            .Validate(n => n is >= 50 and <= 300 
+                                ? ValidationResult.Success() 
+                                : ValidationResult.Error("Must be between 50 and 300")));
+                    
+                    _settings.LongDescriptionWords = AnsiConsole.Prompt(
+                        new TextPrompt<int>("Long description word count:")
+                            .DefaultValue(_settings.LongDescriptionWords)
+                            .Validate(n => n is >= 100 and <= 1000 
+                                ? ValidationResult.Success() 
+                                : ValidationResult.Error("Must be between 100 and 1000")));
+                    
+                    ConsoleUI.ShowSuccess("Description lengths updated");
+                    break;
+                    
+                case "📑 Chapter Settings":
+                    _settings.MinChapters = AnsiConsole.Prompt(
+                        new TextPrompt<int>("Minimum number of chapters:")
+                            .DefaultValue(_settings.MinChapters)
+                            .Validate(n => n is >= 1 and <= 10 
+                                ? ValidationResult.Success() 
+                                : ValidationResult.Error("Must be between 1 and 10")));
+                    
+                    _settings.MaxChapters = AnsiConsole.Prompt(
+                        new TextPrompt<int>("Maximum number of chapters:")
+                            .DefaultValue(_settings.MaxChapters)
+                            .Validate(n => n >= _settings.MinChapters && n <= 50 
+                                ? ValidationResult.Success() 
+                                : ValidationResult.Error($"Must be between {_settings.MinChapters} and 50")));
+                    
+                    _settings.ChaptersPer30Min = AnsiConsole.Prompt(
+                        new TextPrompt<int>("Target chapters per 30 minutes:")
+                            .DefaultValue(_settings.ChaptersPer30Min)
+                            .Validate(n => n is >= 1 and <= 15 
+                                ? ValidationResult.Success() 
+                                : ValidationResult.Error("Must be between 1 and 15")));
+                    
+                    _settings.ChapterTitleMaxWords = AnsiConsole.Prompt(
+                        new TextPrompt<int>("Maximum words per chapter title:")
+                            .DefaultValue(_settings.ChapterTitleMaxWords)
+                            .Validate(n => n is >= 2 and <= 15 
+                                ? ValidationResult.Success() 
+                                : ValidationResult.Error("Must be between 2 and 15")));
+                    
+                    ConsoleUI.ShowSuccess("Chapter settings updated");
+                    break;
+                    
+                case "⬅️ Back":
                     return;
             }
         }

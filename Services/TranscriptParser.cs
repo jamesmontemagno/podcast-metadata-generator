@@ -11,19 +11,19 @@ public partial class TranscriptParser
     private readonly AppSettings _settings;
     
     // Zencastr format: MM:SS.ss or HH:MM:SS.ss (centiseconds)
-    [GeneratedRegex(@"^(\d{1,2}):(\d{2})(?::(\d{2}))?\.(\d{2})$", RegexOptions.Compiled)]
+    [GeneratedRegex(@"^(\d{1,2}):(\d{2})(?::(\d{2}))?\.(\d{2})$")]
     private static partial Regex ZencastrTimestampRegex();
     
     // Time range format: HH:MM:SS - HH:MM:SS or with arrows
-    [GeneratedRegex(@"(\d{1,2}):(\d{2}):(\d{2})\s*[-–>]+\s*(\d{1,2}):(\d{2}):(\d{2})", RegexOptions.Compiled)]
+    [GeneratedRegex(@"(\d{1,2}):(\d{2}):(\d{2})\s*[-–>]+\s*(\d{1,2}):(\d{2}):(\d{2})")]
     private static partial Regex TimeRangeRegex();
     
     // SRT timestamp format: HH:MM:SS,mmm --> HH:MM:SS,mmm
-    [GeneratedRegex(@"(\d{2}):(\d{2}):(\d{2}),(\d{3})\s*-->\s*(\d{2}):(\d{2}):(\d{2}),(\d{3})", RegexOptions.Compiled)]
+    [GeneratedRegex(@"(\d{2}):(\d{2}):(\d{2}),(\d{3})\s*-->\s*(\d{2}):(\d{2}):(\d{2}),(\d{3})")]
     private static partial Regex SrtTimestampRegex();
     
     // Speaker detection: short line, capitalized, no punctuation at start
-    [GeneratedRegex(@"^[A-Z][a-zA-Z\s]{0,30}$", RegexOptions.Compiled)]
+    [GeneratedRegex(@"^[A-Z][a-zA-Z\s]{0,30}$")]
     private static partial Regex SpeakerRegex();
     
     public TranscriptParser(AppSettings settings)
@@ -33,33 +33,43 @@ public partial class TranscriptParser
     
     /// <summary>
     /// Parses a transcript file and returns a Transcript object.
+    /// Supports Zencastr, time-range, SRT formats, or falls back to plain text.
     /// </summary>
     public async Task<Transcript> ParseAsync(string filePath)
     {
         if (!File.Exists(filePath))
             throw new FileNotFoundException($"Transcript file not found: {filePath}");
         
-        var lines = await File.ReadAllLinesAsync(filePath);
+        var rawContent = await File.ReadAllTextAsync(filePath);
+        var lines = rawContent.Split(['\n', '\r'], StringSplitOptions.RemoveEmptyEntries);
         var format = DetectFormat(lines);
         
-        var segments = format switch
+        // Try to parse structured formats, fall back to plain text
+        List<TranscriptSegment> segments = [];
+        
+        if (format != TranscriptFormat.PlainText)
         {
-            TranscriptFormat.Zencastr => ParseZencastr(lines),
-            TranscriptFormat.TimeRange => ParseTimeRange(lines),
-            TranscriptFormat.Srt => ParseSrt(lines),
-            _ => throw new InvalidOperationException($"Unable to detect transcript format for: {filePath}")
-        };
+            segments = format switch
+            {
+                TranscriptFormat.Zencastr => ParseZencastr([.. lines]),
+                TranscriptFormat.TimeRange => ParseTimeRange([.. lines]),
+                TranscriptFormat.Srt => ParseSrt([.. lines]),
+                _ => []
+            };
+        }
         
         return new Transcript
         {
             FilePath = filePath,
             Format = format,
+            RawContent = rawContent,
             Segments = segments
         };
     }
     
     /// <summary>
     /// Detects the format of the transcript by scanning the first 50 lines.
+    /// Returns PlainText if no structured format is detected.
     /// </summary>
     private TranscriptFormat DetectFormat(string[] lines)
     {
@@ -70,14 +80,21 @@ public partial class TranscriptParser
             return TranscriptFormat.Srt;
         
         // Check for Zencastr format
-        if (linesToCheck.Any(l => ZencastrTimestampRegex().IsMatch(l.Trim())))
-            return TranscriptFormat.Zencastr;
+        foreach (var line in linesToCheck)
+        {
+            var trimmed = line.Trim();
+            if (ZencastrTimestampRegex().IsMatch(trimmed))
+            {
+                return TranscriptFormat.Zencastr;
+            }
+        }
         
         // Check for time range format
         if (linesToCheck.Any(l => TimeRangeRegex().IsMatch(l)))
             return TranscriptFormat.TimeRange;
         
-        return TranscriptFormat.Unknown;
+        // Default to plain text - just send the whole thing to the AI
+        return TranscriptFormat.PlainText;
     }
     
     /// <summary>

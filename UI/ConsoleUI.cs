@@ -433,8 +433,20 @@ public static class ConsoleUI
         
         table.AddRow("[blue]File[/]", Markup.Escape(Path.GetFileName(transcript.FilePath)));
         table.AddRow("[blue]Format[/]", transcript.Format.ToString());
-        table.AddRow("[blue]Duration[/]", $"{transcript.DurationMinutes:F1} minutes");
-        table.AddRow("[blue]Segments[/]", transcript.Segments.Count.ToString());
+        
+        if (transcript.HasTimestamps)
+        {
+            table.AddRow("[blue]Duration[/]", $"{transcript.DurationMinutes:F1} minutes");
+            table.AddRow("[blue]Segments[/]", transcript.Segments.Count.ToString());
+        }
+        else
+        {
+            // For plain text, show word count and estimated duration
+            var wordCount = transcript.RawContent.Split([' ', '\n', '\r', '\t'], StringSplitOptions.RemoveEmptyEntries).Length;
+            table.AddRow("[blue]Words[/]", $"{wordCount:N0}");
+            table.AddRow("[blue]Est. Duration[/]", $"~{transcript.DurationMinutes:F0} minutes");
+            table.AddRow("[grey]Note[/]", "[grey]Plain text - no timestamps detected[/]");
+        }
         
         AnsiConsole.Write(table);
         AnsiConsole.WriteLine();

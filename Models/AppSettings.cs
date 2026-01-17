@@ -127,26 +127,129 @@ public static class AvailableModels
 
 /// <summary>
 /// Application settings and user preferences.
+/// Persisted to disk via SettingsService.
 /// </summary>
 public class AppSettings
 {
+    #region AI Settings
+    
     /// <summary>
     /// Selected AI model for generation.
     /// </summary>
     public string Model { get; set; } = AvailableModels.Default;
+    
+    #endregion
+    
+    #region Output Settings
     
     /// <summary>
     /// Output directory for generated files.
     /// </summary>
     public string OutputDirectory { get; set; } = Environment.CurrentDirectory;
     
+    #endregion
+    
+    #region Title Settings
+    
     /// <summary>
-    /// Optional episode context provided by the user.
+    /// Number of title suggestions to generate.
+    /// </summary>
+    public int TitleCount { get; set; } = 5;
+    
+    /// <summary>
+    /// Maximum words per title.
+    /// </summary>
+    public int TitleMaxWords { get; set; } = 10;
+    
+    #endregion
+    
+    #region Description Settings
+    
+    /// <summary>
+    /// Word count target for short descriptions.
+    /// </summary>
+    public int ShortDescriptionWords { get; set; } = 50;
+    
+    /// <summary>
+    /// Word count target for medium descriptions.
+    /// </summary>
+    public int MediumDescriptionWords { get; set; } = 150;
+    
+    /// <summary>
+    /// Word count target for long descriptions.
+    /// </summary>
+    public int LongDescriptionWords { get; set; } = 300;
+    
+    #endregion
+    
+    #region Chapter Settings
+    
+    /// <summary>
+    /// Minimum number of chapters to generate.
+    /// </summary>
+    public int MinChapters { get; set; } = 3;
+    
+    /// <summary>
+    /// Maximum number of chapters to generate.
+    /// </summary>
+    public int MaxChapters { get; set; } = 12;
+    
+    /// <summary>
+    /// Target chapters per 30 minutes of content.
+    /// </summary>
+    public int ChaptersPer30Min { get; set; } = 5;
+    
+    /// <summary>
+    /// Maximum words per chapter title.
+    /// </summary>
+    public int ChapterTitleMaxWords { get; set; } = 8;
+    
+    #endregion
+    
+    #region Episode Context
+    
+    /// <summary>
+    /// Optional episode context provided by the user (guest names, topics, etc.).
+    /// This is per-session and not persisted.
     /// </summary>
     public string? EpisodeContext { get; set; }
+    
+    /// <summary>
+    /// Default podcast name (persisted for reuse).
+    /// </summary>
+    public string? PodcastName { get; set; }
+    
+    /// <summary>
+    /// Default host name(s) (persisted for reuse).
+    /// </summary>
+    public string? HostNames { get; set; }
+    
+    #endregion
+    
+    #region Parser Settings
     
     /// <summary>
     /// Default duration to add if end time is not available (in ms).
     /// </summary>
     public long DefaultSegmentDurationMs { get; set; } = 5000;
+    
+    #endregion
+    
+    #region Prompt Settings
+    
+    /// <summary>
+    /// Whether to prompt for episode context when loading a transcript.
+    /// </summary>
+    public bool PromptForContextOnLoad { get; set; } = true;
+    
+    #endregion
+    
+    /// <summary>
+    /// Calculates the target number of chapters based on episode duration.
+    /// </summary>
+    public int CalculateTargetChapters(double durationMinutes)
+    {
+        var target = (int)(durationMinutes / 30.0 * ChaptersPer30Min);
+        return Math.Max(MinChapters, Math.Min(MaxChapters, target));
+    }
 }

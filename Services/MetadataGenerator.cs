@@ -49,7 +49,7 @@ public partial class MetadataGenerator : IAsyncDisposable
         
         var response = await SendPromptWithStreamingAsync(
             PromptTemplates.TitleSystemPrompt,
-            PromptTemplates.GetTitleUserPrompt(transcript.GetFullText(), _settings.EpisodeContext),
+            PromptTemplates.GetTitleUserPrompt(transcript.GetFullText(), _settings),
             onChunk,
             cancellationToken);
         
@@ -58,7 +58,7 @@ public partial class MetadataGenerator : IAsyncDisposable
             .Split('\n', StringSplitOptions.RemoveEmptyEntries)
             .Select(line => NumberedListRegex().Replace(line.Trim(), ""))
             .Where(line => !string.IsNullOrWhiteSpace(line))
-            .Take(5)
+            .Take(_settings.TitleCount)
             .ToList();
         
         return titles;
@@ -81,8 +81,8 @@ public partial class MetadataGenerator : IAsyncDisposable
             PromptTemplates.GetDescriptionUserPrompt(
                 transcript.GetFullText(), 
                 length, 
-                selectedTitle,
-                _settings.EpisodeContext),
+                _settings,
+                selectedTitle),
             onChunk,
             cancellationToken);
         
@@ -120,15 +120,12 @@ public partial class MetadataGenerator : IAsyncDisposable
     {
         await EnsureInitializedAsync();
         
-        var targetChapters = PromptTemplates.CalculateTargetChapters(transcript.DurationMinutes);
-        
         var response = await SendPromptWithStreamingAsync(
             PromptTemplates.ChapterSystemPrompt,
             PromptTemplates.GetChapterUserPrompt(
                 transcript.GetTextWithTimestamps(),
                 transcript.DurationSeconds,
-                targetChapters,
-                _settings.EpisodeContext),
+                _settings),
             onChunk,
             cancellationToken);
         

@@ -16,16 +16,9 @@ public static class PromptTemplates
         accurately reflect the content while being compelling and SEO-friendly.
         """;
     
-    public static string GetTitleUserPrompt(string transcript, string? episodeContext = null)
+    public static string GetTitleUserPrompt(string transcript, AppSettings settings)
     {
-        var contextSection = string.IsNullOrEmpty(episodeContext) 
-            ? "" 
-            : $"""
-
-            Additional context about this episode:
-            {episodeContext}
-
-            """;
+        var contextSection = BuildContextSection(settings);
         
         return $$"""
             You are generating titles for a podcast episode based on its transcript.
@@ -35,11 +28,11 @@ public static class PromptTemplates
             The title should reflect what listeners will spend most of their time hearing about.
             You can mention secondary topics briefly, but prioritize the core subject matter.
             {{contextSection}}
-            Generate 5 creative, concise titles for this podcast episode.
-            Keep titles under 10 words each.
+            Generate {{settings.TitleCount}} creative, concise titles for this podcast episode.
+            Keep titles under {{settings.TitleMaxWords}} words each.
             Make them engaging, descriptive, and SEO-friendly.
 
-            Return ONLY the 5 titles, one per line, numbered 1-5. No additional commentary.
+            Return ONLY the {{settings.TitleCount}} titles, one per line, numbered 1-{{settings.TitleCount}}. No additional commentary.
 
             Episode Transcript:
             {{transcript}}
@@ -59,29 +52,22 @@ public static class PromptTemplates
     public static string GetDescriptionUserPrompt(
         string transcript, 
         DescriptionLength length, 
-        string? selectedTitle = null,
-        string? episodeContext = null)
+        AppSettings settings,
+        string? selectedTitle = null)
     {
-        var lengthGuidance = length switch
+        var (wordTarget, formatGuidance) = length switch
         {
-            DescriptionLength.Short => "in 2-3 sentences (50-75 words)",
-            DescriptionLength.Medium => "in 1-2 paragraphs (100-150 words)",
-            DescriptionLength.Long => "in 3-4 paragraphs (200-300 words)",
-            _ => "in 1-2 paragraphs (100-150 words)"
+            DescriptionLength.Short => (settings.ShortDescriptionWords, $"in 2-3 sentences (~{settings.ShortDescriptionWords} words)"),
+            DescriptionLength.Medium => (settings.MediumDescriptionWords, $"in 1-2 paragraphs (~{settings.MediumDescriptionWords} words)"),
+            DescriptionLength.Long => (settings.LongDescriptionWords, $"in 3-4 paragraphs (~{settings.LongDescriptionWords} words)"),
+            _ => (settings.MediumDescriptionWords, $"in 1-2 paragraphs (~{settings.MediumDescriptionWords} words)")
         };
         
         var titleSection = string.IsNullOrEmpty(selectedTitle) 
             ? "" 
             : $"Episode title: {selectedTitle}\n\n";
         
-        var contextSection = string.IsNullOrEmpty(episodeContext) 
-            ? "" 
-            : $"""
-
-            Additional context about this episode:
-            {episodeContext}
-
-            """;
+        var contextSection = BuildContextSection(settings);
         
         return $$"""
             You are writing a compelling podcast episode description based on its transcript.
@@ -91,7 +77,7 @@ public static class PromptTemplates
             - Key insights, valuable takeaways, or unique perspectives shared
             - The overall narrative or flow of the discussion
             {{contextSection}}
-            Write a description {{lengthGuidance}} that:
+            Write a description {{formatGuidance}} that:
             - Focuses primarily on the main topics discussed
             - Highlights the value and key takeaways for listeners
             - Uses engaging, conversational language
@@ -118,17 +104,10 @@ public static class PromptTemplates
     public static string GetChapterUserPrompt(
         string transcriptWithTimestamps, 
         double durationSeconds,
-        int targetChapters,
-        string? episodeContext = null)
+        AppSettings settings)
     {
-        var contextSection = string.IsNullOrEmpty(episodeContext) 
-            ? "" 
-            : $"""
-
-            Additional context about this episode:
-            {episodeContext}
-
-            """;
+        var targetChapters = settings.CalculateTargetChapters(durationSeconds / 60.0);
+        var contextSection = BuildContextSection(settings);
         
         return $$"""
             Create chapter markers for this podcast episode from the timestamped transcript below.
@@ -140,7 +119,7 @@ public static class PromptTemplates
             Think of chapters as major sections viewers would skip to, not every minor topic.
 
             Guidelines:
-            - Create approximately {{targetChapters}} chapters (minimum 3, maximum 12)
+            - Create approximately {{targetChapters}} chapters (minimum {{settings.MinChapters}}, maximum {{settings.MaxChapters}})
             - Only mark MAJOR topic transitions - ignore minor shifts
             - Each chapter should represent 5-10+ minutes of distinct content
             - First chapter MUST start at 00:00 (Introduction/Opening)
@@ -148,7 +127,7 @@ public static class PromptTemplates
             - Format timestamps as MM:SS or HH:MM:SS
             - Episode duration is about {{(int)durationSeconds}} seconds; do not emit timestamps beyond that
             - Distribute chapters evenly; avoid any gap > 10 minutes between chapters
-            - Create descriptive titles (under 8 words)
+            - Create descriptive titles (under {{settings.ChapterTitleMaxWords}} words)
 
             Return chapters in this EXACT format, one per line:
             MM:SS Title Here
@@ -162,14 +141,35 @@ public static class PromptTemplates
             """;
     }
     
+    #endregion
+    
+    #region Helpers
+    
     /// <summary>
-    /// Calculates the target number of chapters based on episode duration.
-    /// Formula: ~5 chapters per 30 minutes, min 3, max 12.
+    /// Builds the context section from settings (podcast name, hosts, episode context).
     /// </summary>
-    public static int CalculateTargetChapters(double durationMinutes)
+    private static string BuildContextSection(AppSettings settings)
     {
-        var target = (int)(durationMinutes / 30.0 * 5);
-        return Math.Max(3, Math.Min(12, target));
+        var parts = new List<string>();
+        
+        if (!string.IsNullOrWhiteSpace(settings.PodcastName))
+            parts.Add($"Podcast: {settings.PodcastName}");
+        
+        if (!string.IsNullOrWhiteSpace(settings.HostNames))
+            parts.Add($"Host(s): {settings.HostNames}");
+        
+        if (!string.IsNullOrWhiteSpace(settings.EpisodeContext))
+            parts.Add($"Episode context: {settings.EpisodeContext}");
+        
+        if (parts.Count == 0)
+            return "";
+        
+        return $"""
+
+            Additional context:
+            {string.Join("\n", parts)}
+
+            """;
     }
     
     #endregion

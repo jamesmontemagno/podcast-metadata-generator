@@ -5,14 +5,18 @@ namespace PodcastMetadataGenerator.Models;
 /// </summary>
 public enum TranscriptFormat
 {
-    Unknown,
+    /// <summary>Plain text without timestamps (loaded as raw content).</summary>
+    PlainText,
+    /// <summary>Zencastr format with timestamps and speakers.</summary>
     Zencastr,
+    /// <summary>Time range format (HH:MM:SS - HH:MM:SS).</summary>
     TimeRange,
+    /// <summary>SRT subtitle format.</summary>
     Srt
 }
 
 /// <summary>
-/// Represents a parsed transcript with all its segments.
+/// Represents a loaded transcript - either parsed with segments or as raw text.
 /// </summary>
 public class Transcript
 {
@@ -27,12 +31,23 @@ public class Transcript
     public TranscriptFormat Format { get; init; }
     
     /// <summary>
-    /// All segments in the transcript.
+    /// Raw text content of the transcript (always available).
+    /// </summary>
+    public string RawContent { get; init; } = string.Empty;
+    
+    /// <summary>
+    /// Parsed segments (may be empty for PlainText format).
     /// </summary>
     public List<TranscriptSegment> Segments { get; init; } = [];
     
     /// <summary>
+    /// Whether the transcript has parsed timestamp segments.
+    /// </summary>
+    public bool HasTimestamps => Segments.Count > 0;
+    
+    /// <summary>
     /// Total duration in milliseconds based on the last segment's end time.
+    /// Returns 0 if no segments are parsed.
     /// </summary>
     public long DurationMs => Segments.Count > 0 ? Segments[^1].EndTimeMs : 0;
     
@@ -42,15 +57,31 @@ public class Transcript
     public double DurationSeconds => DurationMs / 1000.0;
     
     /// <summary>
-    /// Total duration in minutes.
+    /// Total duration in minutes. Estimates based on word count if no timestamps.
     /// </summary>
-    public double DurationMinutes => DurationSeconds / 60.0;
+    public double DurationMinutes => HasTimestamps 
+        ? DurationSeconds / 60.0 
+        : EstimateDurationMinutes();
     
     /// <summary>
-    /// Gets the full transcript text with speaker labels.
+    /// Estimates duration based on word count (~150 words per minute for speech).
+    /// </summary>
+    private double EstimateDurationMinutes()
+    {
+        var wordCount = RawContent.Split([' ', '\n', '\r', '\t'], StringSplitOptions.RemoveEmptyEntries).Length;
+        return wordCount / 150.0; // Average speaking rate
+    }
+    
+    /// <summary>
+    /// Gets the full transcript text for sending to AI.
     /// </summary>
     public string GetFullText()
     {
+        // For plain text, just return raw content
+        if (!HasTimestamps)
+            return RawContent;
+        
+        // For parsed transcripts, format with speaker labels
         return string.Join("\n\n", Segments.Select(s => 
             string.IsNullOrEmpty(s.Speaker) 
                 ? s.Text 
@@ -58,10 +89,14 @@ public class Transcript
     }
     
     /// <summary>
-    /// Gets the full transcript with timestamps for chapter generation.
+    /// Gets the transcript with timestamps for chapter generation.
+    /// Falls back to raw content if no timestamps available.
     /// </summary>
     public string GetTextWithTimestamps()
     {
+        if (!HasTimestamps)
+            return RawContent;
+        
         return string.Join("\n", Segments.Select(s =>
             $"[{s.StartTimeYouTube} - {FormatTimeForYouTube(s.EndTimeMs)}] " +
             (string.IsNullOrEmpty(s.Speaker) ? s.Text : $"{s.Speaker}: {s.Text}")));

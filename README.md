@@ -8,14 +8,15 @@ Generate podcast metadata (titles, descriptions, chapters, SRT subtitles) from t
 
 ## ✨ Features
 
-- **🎯 Title Generation** - Get 5 creative title suggestions for your episode
+- **🎯 Title Generation** - Get multiple creative title suggestions for your episode
 - **📝 Description Generation** - Create short, medium, and long descriptions optimized for different platforms
 - **📑 Chapter Generation** - Auto-generate YouTube-compatible chapter markers with timestamps
 - **🎬 SRT Conversion** - Convert transcripts to valid SRT subtitle format
-- **🔄 Multiple Transcript Formats** - Support for Zencastr, time-range, and SRT formats
+- **🔄 Multiple Transcript Formats** - Support for Zencastr, time-range, SRT formats, and plain text
 - **📂 File Browser** - Built-in file browser or drag-and-drop support
 - **⚡ Streaming Responses** - Watch AI responses generate in real-time
 - **🤖 Model Selection** - Choose from multiple AI models (GPT-5, Claude, Gemini)
+- **⚙️ Configurable Settings** - Customize generation parameters and save preferences
 
 ## 📋 Prerequisites
 
@@ -103,6 +104,9 @@ Hello and welcome to the show.
 Thanks for having me!
 ```
 
+### Plain Text
+Any text file without timestamps will be processed as plain text. Note: Chapter generation and SRT conversion require timestamps.
+
 ## 📁 Output Files
 
 When you save results, the following files are generated:
@@ -121,16 +125,29 @@ When you save results, the following files are generated:
 
 Access settings from the main menu to configure:
 
+### General Settings
 - **AI Model** - Select from available Copilot models (dynamically fetched from CLI)
 - **Output Directory** - Default location for saved files
+- **Podcast Name** - Your podcast name (used in prompts for better context)
+- **Host Names** - Host names (used in prompts)
 - **Episode Context** - Add guest names, topics, or other context to improve generation
+
+### Generation Settings
+- **Title Count** - Number of title suggestions to generate (default: 5)
+- **Title Max Words** - Maximum words per title (default: 10)
+- **Description Lengths** - Word counts for short/medium/long descriptions (default: 50/150/300)
+- **Chapter Range** - Min/max chapters to generate (default: 3-12)
+- **Chapters per 30 min** - Target density of chapters (default: 5)
+- **Chapter Title Words** - Max words per chapter title (default: 8)
+
+Settings are automatically saved to `~/.config/podcast-metadata-generator/settings.json`.
 
 ## 🏗️ Project Structure
 
 ```
 podcast-metadata-generator/
 ├── Models/
-│   ├── AppSettings.cs       # Configuration and available models
+│   ├── AppSettings.cs       # Configuration and generation settings
 │   ├── GenerationResult.cs  # Results container
 │   ├── Manifest.cs          # JSON manifest structure
 │   └── Transcript.cs        # Transcript and segment models
@@ -138,6 +155,7 @@ podcast-metadata-generator/
 │   ├── CopilotAuthService.cs   # CLI authentication checks
 │   ├── MetadataGenerator.cs    # AI generation via Copilot SDK
 │   ├── OutputService.cs        # File output handling
+│   ├── SettingsService.cs      # Settings persistence
 │   ├── SrtConverter.cs         # SRT format conversion
 │   └── TranscriptParser.cs     # Multi-format transcript parsing
 ├── Prompts/
