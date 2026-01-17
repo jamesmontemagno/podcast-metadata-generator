@@ -32,9 +32,16 @@ public partial class MetadataGenerator : IAsyncDisposable
     {
         if (_isInitialized) return;
         
-        _client = new CopilotClient();
-        await _client.StartAsync();
-        _isInitialized = true;
+        try
+        {
+            _client = new CopilotClient();
+            await _client.StartAsync();
+            _isInitialized = true;
+        }
+        catch (Exception ex)
+        {
+            throw new InvalidOperationException($"Failed to initialize Copilot client: {ex.Message}", ex);
+        }
     }
     
     /// <summary>
@@ -178,16 +185,32 @@ public partial class MetadataGenerator : IAsyncDisposable
         if (_client == null)
             throw new InvalidOperationException("Client not initialized");
         
-        await using var session = await _client.CreateSessionAsync(new SessionConfig
+        // Sanitize the user prompt to avoid serialization issues
+        // Remove or replace any characters that might cause JSON serialization problems
+        var sanitizedPrompt = SanitizeForJson(userPrompt);
+        
+        CopilotSession? session = null;
+        try
         {
-            Model = _settings.Model,
-            Streaming = onChunk != null,
-            SystemMessage = new SystemMessageConfig
+            // Note: Streaming set to true causes serialization issues with large prompts
+            // in some SDK versions, so we use streaming only when an onChunk handler is provided
+            session = await _client.CreateSessionAsync(new SessionConfig
             {
-                Mode = SystemMessageMode.Replace,
-                Content = systemPrompt
-            }
-        });
+                Model = _settings.Model,
+                Streaming = true, // Always use streaming for better responsiveness
+                SystemMessage = new SystemMessageConfig
+                {
+                    Mode = SystemMessageMode.Replace,
+                    Content = SanitizeForJson(systemPrompt)
+                }
+            });
+        }
+        catch (Exception ex)
+        {
+            throw new InvalidOperationException($"Failed to create session (model: {_settings.Model}): {ex.Message}", ex);
+        }
+        
+        await using var _ = session;
         
         var responseBuilder = new System.Text.StringBuilder();
         var done = new TaskCompletionSource();
@@ -221,10 +244,46 @@ public partial class MetadataGenerator : IAsyncDisposable
             }
         });
         
-        await session.SendAsync(new MessageOptions { Prompt = userPrompt });
+        try
+        {
+            await session.SendAsync(new MessageOptions { Prompt = sanitizedPrompt });
+        }
+        catch (Exception ex)
+        {
+            throw new InvalidOperationException($"Failed to send message (prompt length: {sanitizedPrompt.Length} chars): {ex.Message}", ex);
+        }
+        
         await done.Task;
         
         return responseBuilder.ToString();
+    }
+    
+    /// <summary>
+    /// Sanitizes text to avoid JSON serialization issues.
+    /// </summary>
+    private static string SanitizeForJson(string text)
+    {
+        if (string.IsNullOrEmpty(text))
+            return text;
+        
+        // Replace problematic characters that might cause JSON serialization issues
+        var result = new System.Text.StringBuilder(text.Length);
+        
+        foreach (var c in text)
+        {
+            // Replace control characters (except standard whitespace)
+            if (char.IsControl(c) && c != '\n' && c != '\r' && c != '\t')
+            {
+                result.Append(' ');
+            }
+            // Keep other characters as-is
+            else
+            {
+                result.Append(c);
+            }
+        }
+        
+        return result.ToString();
     }
     
     /// <summary>

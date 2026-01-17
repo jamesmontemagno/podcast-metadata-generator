@@ -14,7 +14,11 @@
     <!-- Self-contained multi-platform publishing -->
     <RuntimeIdentifiers>linux-x64;linux-arm64;win-x64;win-arm64;osx-x64;osx-arm64</RuntimeIdentifiers>
     <PublishSelfContained>true</PublishSelfContained>
-    <PublishTrimmed>true</PublishTrimmed>
+    <!-- Note: PublishTrimmed disabled because GitHub.Copilot.SDK uses reflection-based JSON serialization -->
+    <PublishTrimmed>false</PublishTrimmed>
+    
+    <!-- Enable reflection-based JSON serialization (required by GitHub.Copilot.SDK / StreamJsonRpc) -->
+    <JsonSerializerIsReflectionEnabledByDefault>true</JsonSerializerIsReflectionEnabledByDefault>
 
     <!-- NuGet package metadata -->
     <PackageId>PodcastMetadataGenerator</PackageId>

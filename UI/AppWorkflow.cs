@@ -251,6 +251,13 @@ public class AppWorkflow
         catch (Exception ex)
         {
             ConsoleUI.ShowError($"Generation failed: {ex.Message}");
+            if (ex.InnerException != null)
+            {
+                ConsoleUI.ShowError($"  Inner: {ex.InnerException.Message}");
+            }
+#if DEBUG
+            AnsiConsole.WriteException(ex);
+#endif
         }
     }
     
