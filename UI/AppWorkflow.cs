@@ -287,6 +287,8 @@ public class AppWorkflow
     private async Task GenerateTitlesInternalAsync()
     {
         var responseText = "";
+        var lockObj = new object();
+        var generationTask = default(Task<List<string>>);
         
         await AnsiConsole.Live(new Panel(""))
             .AutoClear(false)
@@ -302,12 +304,32 @@ public class AppWorkflow
                 };
                 ctx.UpdateTarget(panel);
                 
-                _result.Titles = await _generator!.GenerateTitlesAsync(
-                    _transcript!,
-                    chunk =>
+                // Start generation on a background thread
+                generationTask = Task.Run(async () =>
+                {
+                    return await _generator!.GenerateTitlesAsync(
+                        _transcript!,
+                        chunk =>
+                        {
+                            lock (lockObj)
+                            {
+                                responseText += chunk;
+                            }
+                        });
+                });
+                
+                // Poll and update UI while generation is running
+                while (!generationTask.IsCompleted)
+                {
+                    string currentText;
+                    lock (lockObj)
                     {
-                        responseText += chunk;
-                        panel = new Panel(Markup.Escape(responseText))
+                        currentText = responseText;
+                    }
+                    
+                    if (!string.IsNullOrEmpty(currentText))
+                    {
+                        panel = new Panel(Markup.Escape(currentText))
                         {
                             Header = new PanelHeader("[bold] Generating Titles [/]"),
                             Border = BoxBorder.Rounded,
@@ -316,7 +338,23 @@ public class AppWorkflow
                             Expand = true
                         };
                         ctx.UpdateTarget(panel);
-                    });
+                    }
+                    
+                    await Task.Delay(50); // Update every 50ms
+                }
+                
+                // Final update
+                _result.Titles = await generationTask;
+                
+                panel = new Panel(Markup.Escape(responseText))
+                {
+                    Header = new PanelHeader("[bold] Generating Titles [/]"),
+                    Border = BoxBorder.Rounded,
+                    BorderStyle = new Style(Color.Blue),
+                    Padding = new Padding(1, 0),
+                    Expand = true
+                };
+                ctx.UpdateTarget(panel);
             });
         
         AnsiConsole.WriteLine();
@@ -345,6 +383,8 @@ public class AppWorkflow
         foreach (var length in Enum.GetValues<DescriptionLength>())
         {
             var responseText = "";
+            var lockObj = new object();
+            var generationTask = default(Task<string>);
             
             await AnsiConsole.Live(new Panel(""))
                 .AutoClear(false)
@@ -360,14 +400,34 @@ public class AppWorkflow
                     };
                     ctx.UpdateTarget(panel);
                     
-                    var description = await _generator!.GenerateDescriptionAsync(
-                        _transcript!,
-                        length,
-                        _result.SelectedTitle,
-                        chunk =>
+                    // Start generation on a background thread
+                    generationTask = Task.Run(async () =>
+                    {
+                        return await _generator!.GenerateDescriptionAsync(
+                            _transcript!,
+                            length,
+                            _result.SelectedTitle,
+                            chunk =>
+                            {
+                                lock (lockObj)
+                                {
+                                    responseText += chunk;
+                                }
+                            });
+                    });
+                    
+                    // Poll and update UI while generation is running
+                    while (!generationTask.IsCompleted)
+                    {
+                        string currentText;
+                        lock (lockObj)
                         {
-                            responseText += chunk;
-                            panel = new Panel(Markup.Escape(responseText))
+                            currentText = responseText;
+                        }
+                        
+                        if (!string.IsNullOrEmpty(currentText))
+                        {
+                            panel = new Panel(Markup.Escape(currentText))
                             {
                                 Header = new PanelHeader($"[bold] Generating {length} Description [/]"),
                                 Border = BoxBorder.Rounded,
@@ -376,9 +436,23 @@ public class AppWorkflow
                                 Expand = true
                             };
                             ctx.UpdateTarget(panel);
-                        });
+                        }
+                        
+                        await Task.Delay(50); // Update every 50ms
+                    }
                     
-                    _result.Descriptions[length] = description;
+                    // Final update
+                    _result.Descriptions[length] = await generationTask;
+                    
+                    panel = new Panel(Markup.Escape(responseText))
+                    {
+                        Header = new PanelHeader($"[bold] Generating {length} Description [/]"),
+                        Border = BoxBorder.Rounded,
+                        BorderStyle = new Style(Color.Yellow),
+                        Padding = new Padding(1, 0),
+                        Expand = true
+                    };
+                    ctx.UpdateTarget(panel);
                 });
             
             AnsiConsole.WriteLine();
@@ -406,6 +480,8 @@ public class AppWorkflow
     private async Task GenerateChaptersInternalAsync()
     {
         var responseText = "";
+        var lockObj = new object();
+        var generationTask = default(Task<List<Chapter>>);
         
         await AnsiConsole.Live(new Panel(""))
             .AutoClear(false)
@@ -421,12 +497,32 @@ public class AppWorkflow
                 };
                 ctx.UpdateTarget(panel);
                 
-                _result.Chapters = await _generator!.GenerateChaptersAsync(
-                    _transcript!,
-                    chunk =>
+                // Start generation on a background thread
+                generationTask = Task.Run(async () =>
+                {
+                    return await _generator!.GenerateChaptersAsync(
+                        _transcript!,
+                        chunk =>
+                        {
+                            lock (lockObj)
+                            {
+                                responseText += chunk;
+                            }
+                        });
+                });
+                
+                // Poll and update UI while generation is running
+                while (!generationTask.IsCompleted)
+                {
+                    string currentText;
+                    lock (lockObj)
                     {
-                        responseText += chunk;
-                        panel = new Panel(Markup.Escape(responseText))
+                        currentText = responseText;
+                    }
+                    
+                    if (!string.IsNullOrEmpty(currentText))
+                    {
+                        panel = new Panel(Markup.Escape(currentText))
                         {
                             Header = new PanelHeader("[bold] Generating Chapters [/]"),
                             Border = BoxBorder.Rounded,
@@ -435,7 +531,23 @@ public class AppWorkflow
                             Expand = true
                         };
                         ctx.UpdateTarget(panel);
-                    });
+                    }
+                    
+                    await Task.Delay(50); // Update every 50ms
+                }
+                
+                // Final update
+                _result.Chapters = await generationTask;
+                
+                panel = new Panel(Markup.Escape(responseText))
+                {
+                    Header = new PanelHeader("[bold] Generating Chapters [/]"),
+                    Border = BoxBorder.Rounded,
+                    BorderStyle = new Style(Color.Green),
+                    Padding = new Padding(1, 0),
+                    Expand = true
+                };
+                ctx.UpdateTarget(panel);
             });
         
         AnsiConsole.WriteLine();
