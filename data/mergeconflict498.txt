@@ -1,0 +1,1112 @@
+00:00.15
+James
+Welcome back everyone to Merge Conflict, your weekly developer podcast. I'm your host James Montemagno and with me Frank Kruger. or Frank, I'm in a hotel room. Ta-da! I'm in beautiful Bellevue, Washington.
+
+00:08.25
+Frank
+oh
+
+00:10.94
+Frank
+It's every other week. James, where the world is James? This time he is in Bellevue, Washington. The wrong state, James. You're not supposed to be in that state. supposed to be in the one to the bottom a little bit.
+
+00:22.07
+James
+States are states, you know. you know know No ah income tax here, so baller. Well, I do have my travel mic here, so I'm on the good road. Someone did ask me.
+
+00:32.39
+James
+This is the Elgato Wave Neo something. i don't know if Frank, you got one, right? You got a thingy?
+
+00:37.82
+Frank
+I did get one on your recommendation. I got it ah for the best reason to buy something. I thought it was cute. I had no idea if it worked well, but you had brought yours to our in-person recording. If you haven't seen, James and I were in the same room together. It was very weird.
+
+00:53.34
+Frank
+And you had the cutest little mic. And I said, well, my mic's volume button or dial keeps falling off. So maybe it's time for a new travel mic. And yours was so cute. I got the same one. I have no idea if it works well.
+
+01:07.54
+Frank
+You sound pretty good, though.
+
+01:09.02
+James
+I think it's not pretty good. We got some compliments on the YouTube, which is great. yeah it's a good little travel, Mike. It required some... um construction because you got like put it together but i think that's okay it makes you work for the microphone you know
+
+01:18.55
+Frank
+Hmm.
+
+01:22.33
+Frank
+seemed a little heavier than the previous. Is that in the stand or is that in the microphone?
+
+01:27.32
+James
+uh in the stand yeah definitely in the stand and i like because you can it's got a nice little mute button it's got the filter and it's really nice so the stand is nice and heavy so i feel like you and it doesn't want to move
+
+01:29.11
+Frank
+Yeah.
+
+01:38.52
+James
+which I, which I appreciate compared to a lot of other, those kinds of travel microphones. I had this also when I was in not Portugal as well. So I think that's where the compliments came from.
+
+01:46.37
+Frank
+Okay.
+
+01:47.04
+James
+Yeah. When we record in person, the microphone did sound amazing, but we forgot to check your Mac input volume slider. And it was like super low. So we, we did republish that podcast.
+
+01:58.07
+James
+I apologize people in the comments. We republished it, boosted the audio as much as we could and from there.
+
+02:02.05
+Frank
+Ooh.
+
+02:02.83
+James
+But Frank, um, You also got something else really quick as an aside for this podcast in the mail, a little surprise goodie.
+
+02:14.71
+Frank
+That's right, James. And you know exactly what it is because you sent it to me. Nice trick, buddy. We have done so many Nintendo recap and Nintendo hardware announcements. And I believe in every Nintendo episode we do, I'm like, maybe I'll try the Nintendo. I haven't had one since 1989 or whenever they came out Maybe it'd be fun to have one. And I never got around to purchasing a Nintendo.
+
+02:41.27
+Frank
+And then out of the blue, James texts me and says, i got this little pink Nintendo thing. Do you want it? And I said, yes, I want it. So here I am, James. I now am the proud renter or owner.
+
+02:54.22
+Frank
+I'm not even sure what the right word is of a cute little pink Nintendo switcheroon. I believe it's a switch one.
+
+02:59.45
+James
+you have ah you have a you have a land yeah Do you have a land lease on that switch? and
+
+03:03.51
+Frank
+yeah i believe the tax man's going to come. I'm going to owe something to someone. you know Nothing's free in this world. But this one just arrived in the mail. So I really don't know what the terms are.
+
+03:15.80
+Frank
+ah It's cute. I've been having fun. i have been saving Hyrule. don't know what all you other people have been doing this whole time because Hyrule still needs saving.
+
+03:26.44
+Frank
+There's all these like pig creatures, which i i tried I tried to make like peace deals with them, but the peace deals fell through. And so I just had to go and start murdering with my sticks.
+
+03:37.50
+Frank
+So I've been picking up a lot of sticks, eating a lot of apples and murdering pig people. um Not sure this is great for kids, but that's my 10 year late review of the Nintendo Switch. I very much enjoy killing pig people with sticks.
+
+03:52.14
+James
+Nice. And if you're, if you're just listening, yes, Frank was waving around, just waving around in the air. Is the Nintendo Switch Lite, is the original Switch correct? So it doesn't have the detachable, right? So it's only on the go.
+
+04:02.62
+James
+You can't like plug it into a TV, but I had ah an extra, no.
+
+04:05.26
+Frank
+I cannot.
+
+04:08.42
+Frank
+There's a USB-C port. I can't just jam every kind of connector onto this thing.
+
+04:12.54
+James
+It will not work, no.
+
+04:12.90
+Frank
+Nintendo, what are you doing?
+
+04:14.62
+James
+No, because the normal Nintendo Switch is the light because it's it's portable only. So, so, um but I think that's okay because you're going to like it. it's It's totally fine. I sent you three games.
+
+04:24.16
+Frank
+Yeah.
+
+04:24.50
+James
+I sent you. um So, okay, here's here's how this is working, fam, for for our listeners.
+
+04:26.36
+Frank
+Mm.
+
+04:30.74
+James
+Frank is the official owner of that Nintendo Switch. Like, that is yours.
+
+04:34.51
+Frank
+Ooh, tax-free.
+
+04:34.46
+James
+It's yours. Yeah.
+
+04:36.57
+Frank
+Cool.
+
+04:37.60
+James
+Tax-free, both in all ways. But I sent you three games and those games are on loan. So those games, so when you go to the brand new website that I vibe coded, myswitchlibrary.com, you can now search and you can actually edit and you can say, I am borrowing these games.
+
+04:44.31
+Frank
+Oh.
+
+04:53.51
+James
+You don't even own them.
+
+04:53.78
+Frank
+Oh.
+
+04:54.31
+James
+So you can filter. Yeah, because I made that for you. vibe coded this website and we're going to talk about some Mac-y, iOS-y things in here in a little bit for for for um for lease management.
+
+05:07.38
+James
+But I decided to I vibe go to this website for you, Frank, because I texted you a bunch of photos. I was like, hey, here are all my games. which is not the best thing because they're little tiny cartridges. You got to zoom in And I was like, okay, Frank's never one, never going to respond. so I just picked out three games for you. But I was like, what if I had a website where you could see my games and be like, oh, I want this one. So I vibe coded my switch library.com, which allows you to log in do your libraries. You can now follow and you have followers. I changed the entire friend system. I changed the backend. It's beautiful. It's got all the stuff. And then you can add and you can search. There's also trending now. So it has all this stuff and, um, which is really cool.
+
+05:44.34
+James
+learned a lot making it, which is really nice. Um, I have a bunch of new features coming. I'm really excited about it.
+
+05:49.95
+Frank
+I love that you just vibe code every random idea that you have now. ah that That's my favorite part of this whole story so far. I mean, the fact that I got free games is kind of fun too, but the fact that you vibe code everything, totally trippy.
+
+06:01.10
+James
+Yeah. So you got Legend of Zelda, the first one, Breath of the Wild.
+
+06:08.34
+Frank
+Yeah.
+
+06:09.30
+James
+yeah That's the first one. And Tears the Kingdom i haven't even played yet, which I do own. Then I sent you everyone's favorite, Mario Kart 8, because everyone loves Mario Kart 8. Deluxe is like the best. And then I also sent you Mario versus Rabbids.
+
+06:17.50
+Frank
+okay
+
+06:19.98
+James
+Okay, this is like XCOM. Do you know XCOM, like a grid-based system?
+
+06:24.47
+Frank
+No, I don't know.
+
+06:25.62
+James
+Okay.
+
+06:26.59
+Frank
+This one confused me a little bit because at first he said you said you were going to send me Mario RPG. So I was ready to go murdering more skeletons in a dungeon with Mario.
+
+06:34.65
+James
+No, no, that's stuff that is that's a different game.
+
+06:36.15
+Frank
+yeah
+
+06:37.34
+James
+I do own that game, but this is a different game. This is a a Mario turn based to have it's a turn based grid thing.
+
+06:43.45
+Frank
+Okay. Tactical shooter. No.
+
+06:46.79
+James
+Tactical shooter.
+
+06:47.93
+Frank
+but Is it really?
+
+06:48.50
+James
+They have guns.
+
+06:48.81
+Frank
+Oh, poor Mario.
+
+06:49.10
+James
+They have guns.
+
+06:50.21
+Frank
+Oh, no. Okay.
+
+06:52.28
+James
+Lasers.
+
+06:52.63
+Frank
+ah I do love my Mario games. um I'm more used to jumping on turtles with my Mario, but I will i will try this gun gun Mario, I guess. Kind of reminds me of that movie from the 90s. I think they had guns in that one, too.
+
+07:06.46
+James
+I think i it's it's ah it's like a grid based system. I really like it because it's strategic, tactical, ah fun, and it's Ubisoft games. So it's Ubisoft. So it's got the Rabbids, which are like these Rabbid characters and you got the Mario characters.
+
+07:19.26
+James
+It's really fun. I beat the entire game and that's a lot saying because I beat the entire game. But you'll you can you'll spend hundreds of hours inside of Hyrule. So you know you get to those games whenever.
+
+07:29.39
+Frank
+Yeah.
+
+07:30.35
+James
+So enjoy it um and we'll get your full review. in few months after you beat it.
+
+07:38.52
+Frank
+Yeah, so far, all I can say is I really enjoy it. And it does mark that I'm getting old because the little icon that tells you what button to press, I have to squint a little bit. I'm like, oh, God, what are they telling? What button are they telling me to press? Yeah.
+
+07:51.38
+James
+That's true. it It is a little small on the Switch Lite. I'm not going to lie. That's the one thing. It's a little bit smaller for screen, especially compared to the Switch 2. um All right.
+
+07:57.71
+Frank
+Okay.
+
+07:58.32
+James
+Eight minutes in. Let's talk about it. Release management of... Mac, Apple software. Frank, I recently went through some release management and you know, we, I've i've now got set up inside of GitHub actions and also Xcode cloud build um publishing, releasing all my.NET MAUI apps, my Blazor hybrid apps.
+
+08:06.07
+Frank
+okay
+
+08:26.25
+James
+I even have a Swift app in there, but I recently, um We're going through and figuring out how to do this for baby smash Mac edition for Scott Hanselman, because he distributes this not on the app store because it and requires on the windows, tons of wind 32 crazy hooks on the Mac.
+
+08:35.79
+Frank
+Oh, yeah.
+
+08:44.52
+James
+It also requires all sorts of illegal things that you can't do inside of a sandbox application.
+
+08:51.80
+Frank
+have Have you tested that? Because, I mean, there are entitlements for a lot of that crazy stuff. You couldn't get it to work with the entitlements. Okay, fair enough.
+
+08:58.58
+James
+No. co Co-pilot said no.
+
+08:59.16
+Frank
+Fair enough.
+
+09:00.60
+James
+Co-pilot said nope. And like, it's like, no.
+
+09:01.75
+Frank
+Oh.
+
+09:03.12
+James
+Yeah.
+
+09:03.22
+Frank
+even try? Okay, fine.
+
+09:04.34
+James
+And i I looked up the entitlement that it said and it's like, you cannot sandbox this app. So you can do a lot of it, but then for all intents and purposes, when once you sandbox, there are things like spotlight that you cannot, it's illegal to disable inside a sandbox, like because of the settings and some of the other things that you can't get out of.
+
+09:08.98
+Frank
+Yeah.
+
+09:21.75
+James
+But that meant for the first time in my life, I had to Figure out how to do hardening. is that what it is?
+
+09:31.29
+Frank
+Oh, yeah. A hardened runtime, puppy.
+
+09:34.20
+James
+ah hardened runtime.
+
+09:34.77
+Frank
+Yeah, this is. And notarizing. These are two different things. Yes.
+
+09:39.61
+James
+I notarized it. Yes. This was the most wild, wacky thing that I've ever done in my life because I'm trying to distribute this outside of the app store.
+
+09:44.28
+Frank
+Yeah.
+
+09:51.25
+James
+And I also needed to get an app updater. I use sparkle, which apparently is very popular on the Mac um to, to implement, but to do this, yes, I had to have a heart and run time and I had to notarize my application and it's, it's, it's,
+
+09:56.22
+Frank
+Oh, gosh.
+
+09:58.93
+Frank
+Hilarious.
+
+10:06.36
+Frank
+Yeah.
+
+10:08.95
+James
+two things that I've never done before. And additionally, like they still require the other things that I do for normal app signing, like get provisioning profiles and get, well, actually you don't get provisioning profiles, but you get sort sort of certificates and you get like an app ID.
+
+10:23.11
+Frank
+Yeah.
+
+10:24.29
+James
+And then you have to get in like app specific identifier things so you can log in. And it's like, it's calling like a weird backend and like sending my app to some server. Like what is happening, Frank?
+
+10:33.78
+Frank
+Yeah. It's a good question. I've been doing this for 10 years and I still ask myself what is happening every time I have to do it because I take notes on like the command lines I have to do. um I've done it both. I've done it like through Xcode and I've done it the command line. It's kind of janky both ways to be thoroughly honest.
+
+10:53.98
+Frank
+um Right, so there's three things at play here. There's the sandbox, the hardened runtime and notarization. They're all kind of separate from each other. The sandbox is the sandbox. We all know it. We all love it. It's the thing you need to enable to be on the App Store.
+
+11:11.90
+Frank
+And that was the original thing that came out. And that basically just limits all the things that the app is allowed to do. It changes the namespaces, what it's allowed to see in the file system, all that good stuff.
+
+11:24.02
+Frank
+The hardened runtime is a whole nother security layer on top of that, an optional security layer, at least it used to be optional. um I honestly can't remember, like at one point the app store was gonna require hardened runtimes also, and then I'm not sure if they backed off on that.
+
+11:41.60
+Frank
+Honestly, I get confused whether I'm using the hardened runtime from time to time, but it is separate from the sandbox. It's just a whole nother set of constraints that you need to enable in your app.
+
+11:53.14
+Frank
+And the weird thing is you need to have, i'm pretty sure you need to have a hard and run time in order to be notarized. And you need to be notarized if you want to distribute your stuff. Not on the App Store.
+
+12:04.60
+Frank
+Are you confused yet? And on top of that, you need a developer account to be notarized, but you don't need the developer account that you pay for to enable notarization, but you still need a developer account.
+
+12:17.12
+Frank
+Are you confused yet?
+
+12:17.53
+James
+Yep.
+
+12:18.76
+Frank
+And if you're not, I can add more to It's the wackiest security model I've ever seen.
+
+12:22.94
+James
+It's true.
+
+12:26.36
+Frank
+Apple, what the heck are you doing to us?
+
+12:29.94
+James
+It's wild. So what happens here is it gets like the Mac set up. It gets Xcode set up. it ends up like grabbing things from like this derived data cache and then it installs. So it, it installs your Apple developer cert. So it like creates variables, imparts your certs, creates a temporary key chain, imports to the key chain or certificates to the key chain logs in and temporary key chain to search through that list, verifies that the certificates were imported. Then you build the thing. I'm setting some information.
+
+13:00.73
+James
+Then you build an archive and it has like you set, ah your all your schema, your archive development team, your versions, and then you have all these crazy code sign flags that you have to pass in.
+
+13:13.76
+Frank
+Yeah.
+
+13:13.78
+James
+And then you have to export it. And when you export it, you also have to send it like tons of different flags. And then there's an entire notarization step. And like, this isn't anything special, like inside of the inside of the the GitHub workflow, inside of actions, it's really doing anything special. Like it's gonna create a zip it like does a bunch of stuff into like some XC run notary tool that's apparently installed like with your zip.
+
+13:39.03
+James
+And it sends just like passwords and team ideas. And then like it comes back and it's just like, I notarized it. And then you get that and then you grab that zip distribution and then that is your distribution.
+
+13:46.81
+Frank
+yeah.
+
+13:51.78
+James
+And and then what happens is like, what the the flow that set up here is it not only like gets that it will distract it and it'll send it to spectacle and verify that the code sign actually did get it on top of it, which is like wild because like there's this, there's all of these crazy so command line tools that are actually like on your machine to verify all this stuff.
+
+14:05.85
+Frank
+yeah
+
+14:14.18
+James
+So you can grab this notarized package if it did work. Cause like just through the command line, like you're saying, And then spectacle, that's what I'm to call it at least, like literally like looks in and it's like, oh, cool. Like, yeah, here is what actually signed it.
+
+14:25.26
+James
+It's like wild.
+
+14:27.35
+Frank
+Yeah, so you're talking about the CI CD approach for doing this all like on a server and doing it all at the command line, it is pretty confusing.
+
+14:34.11
+James
+Mm hmm.
+
+14:36.51
+Frank
+The original flow was more apply and maybe just as confusing. But the the original flow was you would build your app and just archive it.
+
+14:47.06
+Frank
+So archiving in the.NET world, there's like a CS Proj setting, like archive on build or something close to that. Or just another target you could do with MSBuilder.NET, archiving it.
+
+14:55.99
+James
+Yeah.
+
+15:02.46
+Frank
+it It was always just around. And then you would go to Xcode. This is how I rocked it in the old days. You would go to Xcode and you can view your archives. So if you go to Xcode, you can bring up a thing called the organizer and all your archived builds show up there.
+
+15:16.92
+Frank
+What I would do then is select the build and then you can say um distribute to Apple. You're not uploading to the App Store, just distribute to Apple. When you click that button, they give you the option.
+
+15:28.03
+Frank
+Do you want to put it on the App Store? Do you just want to notarize it? You select notarize, click, click, click, progress bar, progress bar, progress bar.
+
+15:31.68
+James
+Yeah.
+
+15:36.62
+Frank
+It poops out a new.app file for you. Or is it a zip? I can't even remember these days. It might even be a package. Ooh. It is the package, I believe, at least for Mac apps.
+
+15:47.51
+Frank
+um And then that's the one that you would publish to your own servers for Sparkle, which you mentioned, which we won't talk about just yet because that's a whole other layer on top of all this nonsense.
+
+15:58.10
+Frank
+um But it was it was a manual process and it was scary every time because you had no idea, like, at least they're not doing an app review or anything. All I think it's really doing is registering some certificates and some hashes with their own servers.
+
+16:14.81
+Frank
+All of this in the name of, if you give a person that package file or the.app, it won't present the scary dialogue. You know the scary dialogue.
+
+16:26.22
+Frank
+You click on the app and it's like, you download this from the internet are you sure you want to run it you're like yes i want to run it's like yeah but this is in developer side are you sure you want to run it you're like yes i want to run it and then apple's like okay we deleted it for you you're like no and it's like if you undelete the file you can go to settings and maybe run it so you go to settings you undelete it you go to settings and you click the button it's like are you sure you want to run this you're like yes just let me run the stupid app And you click the button and it's like, okay, maybe you should go start the app.
+
+16:26.51
+James
+Yes. yes
+
+16:57.97
+Frank
+You run the app and it's like, are you for real sure? You say yes. And then you run the app. So if you don't want that distribution model for your apps, this is the notarization process you have to go through.
+
+17:09.98
+James
+Oh, this is is amazing. Yeah. Like, um, we all ah go down that route like because apparently no one's notarizing their apps, but I thought I didn't even realize. So when I know it went down, I was like, I thought I actually had to notarize the app to even, even I thought I was just going to get the scary dialogue anyways, but yeah, I didn't.
+
+17:27.14
+James
+And was cool about that is like, yeah, once it's in your down download folder, you can just run it and drag it to your apps or whatever.
+
+17:27.94
+Frank
+Yeah.
+
+17:33.47
+James
+And it's just normal. which is great. And that's what I, um, I, I successfully did it. Um, it totally happened funnily enough and crazily enough, like copilot wrote like an 18 step process to walk me through doing all of this.
+
+17:46.59
+Frank
+Oh, gosh.
+
+17:48.23
+James
+Let me see if I can find it in baby smash. Cause it like it lit. I mean, honestly, the GitHub release workflow is 300 lines of YAML.
+
+17:56.79
+Frank
+Oh, no.
+
+17:56.83
+James
+Like it is, is, but because it's doing all the sparkle stuff too, it is like bananas, uh, in general.
+
+18:04.09
+Frank
+We should write a proper action for this so we can sum it all up into like a sub-build thing. um And i do I should say, like, on top of this, it's all Spotlight-driven.
+
+18:10.07
+James
+Oh yeah.
+
+18:16.49
+Frank
+Spotlight is an indexing service for the computer, but it's also very much tied into Apple's security model. And there are some things, applications, that... As a developer, like we' we're using build folders. You mentioned the drive data. That's where Xcode likes to put a lot of its builds and things like that. In.NET, we have the bin and OBJ directories, usually nested away in our little like projects folder and all that stuff.
+
+18:42.82
+James
+Yeah.
+
+18:43.35
+Frank
+It will be weird, like, if you're testing the security model, it won't work the way it's going to work on another person's machine. And that's because the slash applications folder isn't just a convenient place to put applications. It is marked in Spotlight and in a lot of heuristics, a lot of algorithms on Apple's security side to treat those apps differently than other apps. So while it's true on Mac, you can drag your.app around to any folder and it should run, the security model changes a bit, especially when it comes to registering file handlers and things like that also, if your app is document-based.
+
+19:27.06
+Frank
+um A lot of like spotlight indexing, a lot of metadata just doesn't work unless you actually put into your applications folder. So I just wanna give it as a pro tip to developers out there. um If you really wanna test if your app is signed correctly, working everything, you literally have to drag it into the applications folder from time to time.
+
+19:46.99
+Frank
+Because if you just leave it in the downloads folder, there's metadata attached to it that this has been downloaded, that'll trigger all different security things.
+
+19:54.55
+James
+Yeah.
+
+19:55.16
+Frank
+um So testing this stuff is actually a pain in the butt. You really want to unarchive it and drag it into the applications folder.
+
+19:58.66
+James
+Well,
+
+20:02.07
+James
+and legitimately like when you use sparkle to do the auto updating, if it, it will literally be like, you cannot auto update from the download folders for that reason.
+
+20:06.39
+Frank
+Mm-hmm.
+
+20:12.30
+James
+I didn't know why, but now I do. It's like, please put this in your applications. Cause it's like, it just can't do it inherently.
+
+20:16.03
+Frank
+Okay.
+
+20:17.74
+James
+But yeah, It's wild. Like, I think it's one of the most crazy process I've been to, but then like, it gets a little bit crazier because like, it's not only that I decided to go down this route, but because I wanted auto updating, it means I needed versioning and I needed a way to trigger that.
+
+20:32.86
+James
+And that's where sparkle comes in and sparkle basically is like an an app updater, right? Like kind of like MSIX kind of like publishing, and but I wanted to publish these packages or these,
+
+20:38.62
+Frank
+Yeah.
+
+20:43.06
+James
+these releases to GitHub releases. i wanted everything to be on GitHub actions.
+
+20:48.13
+Frank
+Okay. Okay.
+
+20:49.62
+James
+And what that meant was that for the first time in my life, I used tags. You know get tag is?
+
+20:58.14
+Frank
+yeah Yeah, dude, I know what a get tag is. But welcome welcome to the world.
+
+21:01.56
+James
+Uh,
+
+21:03.46
+Frank
+You know what work trees are, but you haven't used tags? My goodness.
+
+21:06.36
+James
+I haven't had a reason. So I just YOLO.
+
+21:09.20
+Frank
+Woohoo!
+
+21:09.20
+James
+I mean, I used to go in Azure DevOps and I would have it like create a release, which inherently creates a tag under the hood. So what I do now in and this recommended path via co-pilot was create a tag, push a tag, and then the tag will trigger a the build, which will create the GitHub release, which would then update, you guessed it, an XML file for Sparkle that tells Sparkle what version of your app is stupid.
+
+21:35.54
+James
+Why is it just an XML file?
+
+21:36.38
+Frank
+Okay, kind can can I give a small intro to Sparkle here? because i thinkre So if you've never done Mac development before, there's a fundamental problem on Mac is that um Apple doesn't give you any way to update apps.
+
+21:41.05
+James
+Yes.
+
+21:47.96
+Frank
+And no one wants to write an app updater.
+
+21:48.51
+James
+Yeah.
+
+21:50.68
+Frank
+Obviously, the recommended approach is you distribute your apps on the App Store. That's obviously the recommended approach. But...
+
+21:56.31
+James
+Yeah. You could brew, I guess.
+
+21:58.68
+Frank
+Yeah, sure. Fine. Don't do that. It's very hostile to everyone. Don't don't make people use brew. So Sparkle was written, believe in the Bronze Age, something like 3000 BC.
+
+22:11.21
+Frank
+um it's It's a classic library. So it's really just a library and you just link it into your app.
+
+22:17.18
+James
+Yeah.
+
+22:18.84
+Frank
+And it has, if you've ever gone up to your like um application menu and said, check for updates, and it says there's an update and it gives you a little message box and the message box has a little like what's new in it. And then there's an update button. 99% of the chance you're using Sparkle or that app is using Sparkle. And this is the UI that everyone's using. a Funny note, the creator of Sparkle highly recommends that no one use Sparkle anymore.
+
+22:47.70
+Frank
+And has been recommending that no one use Sparkle anymore for at least 10 years. And yet we all still use Sparkle. Everyone uses Sparkle. Because you know what? It works.
+
+22:58.58
+Frank
+And it's it's a simple premise. um You configure Sparkle to point at a web server. And it's just going to look for XML file on that web server. That XML file is going to list every version of the app.
+
+23:13.58
+Frank
+It's going to look at what version's installed. It's going to look at that XML file, see, oh, there's a new one. And in that XML file, it has a version number. And it points to a new package or a.app. I think it can handle both.
+
+23:26.81
+Frank
+And then Sparkle will handle the the dirty, ugly task of downloading the app Killing your app, doing the swappy swappy, putting the new app in its place, and then restarting your app.
+
+23:41.30
+Frank
+um It's kind of a miracle. Sparkle still works, but I think people still work on Sparkle. That's why it still works. But given all of Apple's security models, it's a small miracle. Sparkle still works. Anyway, it's a great project.
+
+23:53.02
+Frank
+And the entire world depends on It's one of those small open source projects that the entire world depends on. And the creator of it says, stop using it, please.
+
+23:59.45
+James
+Yeah.
+
+24:03.93
+James
+Yeah. Anyways, that's been my fun release stuff. What's been your fun release stuff?
+
+24:09.85
+Frank
+um Did you know a new thing came out,.NET 10?
+
+24:13.41
+James
+I've heard of it. I'm releasing all my apps with that in a 10 in fact.
+
+24:15.64
+Frank
+okay Well, I had updated to.NET 9.9995. I wasn't actually up to a.NET 10. And talking about releases, I missed my release.
+
+24:31.58
+Frank
+I really wanted to have all my apps updated for.NET 10 with all the Glass Effects and the Xcode 26s and the iOS 26s and all that before the holiday season. But I got distracted not doing that and just traveling for the holiday season.
+
+24:50.65
+Frank
+And so I'm catching up, James, on this little thing called.NET 10 because I had actually gotten the.NET 10 SDK. But back in the day, you would get the.NET 10 SDK, but I was still building.NET 9 apps.
+
+25:06.65
+Frank
+And it's just been in the last week that I've actually been properly updating all my apps to.NET 10. So am. ten so here i am I'm not that late. I'm just like a month, month and a half late to the.NET 10 party. i I thought like maybe I was already done because I was using the 10 SDK, but building.NET 9 apps, I thought I was just going to jururu install it and all my CI CD is going to work. No, it's never that easy. So I've been enjoying the fun process.
+
+25:36.73
+Frank
+And you and I are always talking about how it's actually pretty easy to update.NET versions now. You just do a grep, search for.NET 9, replace with.NET 10.
+
+25:46.23
+James
+i have the I've been using like the the GitHub Copilot upgrade assistant thing, modernization tool.
+
+25:51.13
+Frank
+Yeah.
+
+25:51.87
+James
+And you can do that. And it's like, oh, I'm on nine. I'm doing this thing. And my apps aren't that complex. like Sometimes it'll update some libraries. It'll check for like you know vulnerabilities and things like that, which is like nice and compatibility.
+
+26:01.63
+Frank
+Mm-hmm.
+
+26:02.69
+James
+Or like it'll look up like, okay, like hey, in.NET 10, this line of code was like you know deprecated and it'll flag it or whatnot. But for the majority of my apps, it's literally just like, runs all the stuff and all the scans and it's like net nine, net 10.
+
+26:17.06
+James
+And i was like, cool, nailed it.
+
+26:17.90
+Frank
+Yeah.
+
+26:18.10
+James
+Perfect. Now it gives me recommendations because of other stuff, but like the, it'll, you know, the minimal viable upgrade, right?
+
+26:20.63
+Frank
+Yeah, yeah.
+
+26:24.38
+James
+Which is usually pretty good.
+
+26:25.05
+Frank
+Yeah. Yeah, and honestly, it hasn't been that hard for me. I got bit in the butt because i love to use reflection. And it turns out they changed a few of the reflection rules. If you're not a mobile developer out there, then you haven't had the pleasure to deal with the.NET trimmer that likes to analyze all your code and remove dead code, which is a great thing. It's a good thing. It keeps our app sizes down.
+
+26:50.14
+Frank
+But whenever they change the trimming algorithm, it can drive you a little bit nuts, especially for people like me that loves to use a lot of reflection and all that stuff. So I've been enjoying the fun party of updating everything to.NET 10, which overall, real easy.
+
+27:06.04
+Frank
+But I've definitely hit a hiccup of I've had to refine and improve, I'll call it improve, a lot of my code to be more trim compatible.
+
+27:17.94
+Frank
+um And that's mostly meant that I have to use generics everywhere. um i used to have, i still have, and I continue to have, and but I'm replacing a lot of functions that just take like objects and then object the type. And then it will call like get type reflection. now get the assembly and it'll find all the types in the assembly. And then I'll start poking around and looking for all the types that implement this interface and then put them in a list and then start activate or create instancing of them. And then they all appear. This work works great, except not with trim mode enabled. It's very upset at me. And so what you have to do is put these attributes everywhere where you're basically telling, I'm not sure if you're telling the compiler, if it's more of just like a warnings check and all that stuff, but you're declaring like, hey, I'm going to use this type dynamically. I'm going to look up its methods dynamically. I want, parameter list constructors because I'm going to be constructing it using activator create instance so it's just been a lot of bookkeeping going through a lot of my old code I think if if you don't do a lot of reflection and stuff this probably that won't affect you very much but I'm a hacksaw use tons of it and I've been writing this code for the last like 15 years so I have some ancient ancient code I have code in there from the days before generics even worked like on iOS. That's why that code doesn't even have generics. So I'm taking that ancient code and dragging it into 2026. So it's been a lot of fun, James.
+
+29:03.62
+James
+That's crazy. I think we did an entire podcast on wasn't it, it was in Donna eight or Donna nine when it was like you had to do some stuff for making SQLite dash net linker safe.
+
+29:12.97
+Frank
+One of those.
+
+29:20.70
+James
+I know this is kind of different maybe, but similar.
+
+29:21.24
+Frank
+Yes. Same. Very similar. Yeah, same. Same similar. Because SQLite-net used a lot of just object parameter types.
+
+29:34.51
+Frank
+Because I would use reflection, would say get type and then look up my database, figure out the object relational mapping and do all that stuff at runtime, which is fine.
+
+29:43.90
+James
+Mm-hmm.
+
+29:44.92
+Frank
+But the problem is the compiler can't statically analyze the code to figure out, am I allowed to get rid of this method? Am I allowed to get rid of this property and that kind of stuff? so I didn't even do the majority of the work. Actually, a contributor did the majority of the work for SQLite and put all the proper annotations in there.
+
+30:08.15
+Frank
+Now, in retrospect, after I've used it for a year, I think I'm going to go through and change it yet again because I don't think we perfectly nailed the interface. It's still a little bit clunky to use with trimming. But yeah, very much so. um In general, there's two big annotations you could put in your code. One is something like requires unaccessed members or something like that.
+
+30:33.24
+Frank
+That's the bad one. If you put that attribute on anything, oh my goodness, you are basically just punting the problem.
+
+30:34.70
+James
+Yeah.
+
+30:40.90
+Frank
+Because any code that calls that function that needs to also be marked requires unaccessed members or something. And then any code that calls that one has to be attributed requires.
+
+30:52.88
+Frank
+And eventually you get to the point where you just can't put the attribute on things. And then the compiler yells at you, it's like, your app is garbage. Please give up programming. You don't know what you're doing. So the better one is um called dynamically accesses members. and So the required one, bad. Dynamically, good. Because the dynamically, you can say it's going to look up properties, it's going to look up methods. And that's the one um I'm switching my apps to use. And that's the one SQLite-Net should be using the most. Because static analysis can happen. Because it it can trace all the types. It can figure out what it needs to do.
+
+31:31.29
+Frank
+um But I don't think we, the the attributes aren't perfect in sequela-net. So everyone keep your eyes open for a new beta coming out because I'm going to change up the API a tiny bit to make it even easier to use because we didn't quite nail it exactly right. Basically, there's still a few too many required unaccessed member thingers on there.
+
+31:55.18
+James
+Gonna make it a beautiful API version, version five, version five dot O.
+
+31:59.38
+Frank
+Well, ideally, if libraries do it right, like you shouldn't notice. you know it It should be one of those smooth things. So system.txt.json is the one Microsoft keeps promoting. They're like, do it the way we did it. We did it awesome. Just emulate us.
+
+32:17.82
+Frank
+But even that one's a little bit wacky. You got to create these like context things and then there's a code generation step and then all there's a lot of wackiness happening, magic wackiness, whatever happening in the background.
+
+32:23.00
+James
+Yep. Yeah.
+
+32:29.82
+Frank
+And that's definitely an option I could go through for SQLite, but it's just not necessary, honestly, in a lot of cases. But from the user's point of view, it should be as simple as my data types are here and it can analyze everything and figure it out.
+
+32:45.97
+Frank
+Ideally, that's how it all works. So it's been fun. I'm sticking with the it's still easy to upgrade from the.NET versions, but when they change an analysis rule like this, it gets ugly.
+
+33:01.66
+Frank
+and In some ways, this is even.NET's fault. This is more the iOS Mac world's fault where we try not to run the JIT at all in those worlds where we just statically compile everything.
+
+33:14.78
+Frank
+It's a harsh environment, but i think I think Microsoft's also promoting it where they want people making their web apps that way too, right?
+
+33:21.94
+James
+Yeah.
+
+33:22.22
+Frank
+Because it's faster.
+
+33:22.65
+James
+Yeah.
+
+33:23.71
+Frank
+It's better, faster.
+
+33:24.66
+James
+Faster, smaller, lighter, all the things. Well, because you gotta got to, yeah, that's harsh and you got to harden it because it's cause so harsh out there. If you don't have a hard, hard nap, then it's harsh.
+
+33:35.33
+Frank
+Meanwhile, you know, i had to install um a little management console for a little external monitor.
+
+33:35.39
+James
+Yeah.
+
+33:41.78
+Frank
+We'll talk about some other time. And that silly little management console, James, was 900 megabytes. It's all it's doing is setting a few settings on an external monitor and it's 900 megabytes. So I appreciate Microsoft trimming our apps, keeping our apps small. It's important. But at the same time, it feels like the rest of the world has just given up.
+
+34:03.82
+Frank
+They're just shipping gigabyte apps for absolutely no reason. This app has like six buttons in it and it's 900 megabytes. I'm not going to decompile it, but I'm curious.
+
+34:12.31
+James
+i think um I think that the, yeah you know, we'll do a little shade on Elgato, but I have like 18 Elgato apps installed on my machine.
+
+34:24.66
+James
+And because there's MirrorLink and then there's the camera app and you need the camera app as well as the MirrorLink app because it gives that.
+
+34:24.79
+Frank
+hmm.
+
+34:32.08
+James
+But the problem is with CameraHub. I'm sure you're talking CameraHub.
+
+34:35.77
+Frank
+I'm talking about Camera Hub. i didn't want to pit say names.
+
+34:37.11
+James
+Yeah.
+
+34:38.29
+Frank
+You said it, not me.
+
+34:38.90
+James
+Okay. the Here's the problem with CameraHub.
+
+34:40.99
+Frank
+900 megabytes for a camera management app.
+
+34:43.61
+James
+The problem with Camera Hub is that Camera Hub is trying to do too much. They decided to put all the cable or the the the camera management, all the filters, the processing, all the libraries, into the same app as the teleprompter because the teleprompter inherently has a camera behind it, right? That you can do it. So they're like, oh two in one, let's do this, right?
+
+35:06.30
+James
+But the problem is that if you're not using an Elgato camera, you don't use anything else in that application. You only use the teleprompter stuff. So you wanna do the teleprompter stuff. um And then they just released, I'm not sure this is what is bloating it, but they did release a like sync voice text.
+
+35:23.45
+James
+yeah As you talk, it will like, it'll scroll your script for you. I tried It was kind of okay. um I need to calibrate it maybe.
+
+35:28.90
+Frank
+Mm-hmm.
+
+35:31.42
+James
+But I'm wondering if they shipped like a local model inside of it or if they're using the Apple model. I don't know. But I was like, if they're doing that, then it's way too big. And I, cause I can't imagine that they're doing it in the cloud because the latency would be so bad.
+
+35:44.12
+James
+So I don't know.
+
+35:45.30
+Frank
+I think it's just their development team has one way to build apps because every Elgato app is 900 megabytes. So they're just using a framework that just throws every megabyte they can find. Like, I assume it's just animated GIFs because i don't I don't see it.
+
+36:05.24
+Frank
+I don't see it anywhere else.
+
+36:06.07
+James
+Well, all all their apps are QT, I'm pretty sure.
+
+36:06.72
+Frank
+like
+
+36:08.95
+James
+I'm pretty sure they're all key. I mean, I don't know if the camera app is QT, but the most of their apps are QT. However, I did notice that they have a new, the the latest, the latest wavelength, which is for their microphones software.
+
+36:23.03
+James
+And also... I don't think it's the camera app. There's another one though. The betas are all like when you, I three applications on windows. So I think they're all native. So I'm wondering if they'll do that for the Mac and switch it back to a native Mac app, because I think that would be a lot smaller and lighter and tighter.
+
+36:39.29
+James
+um just like the native windows app it like looks and feels a lot better it's buggy but like you know it's the beta so we'll see but anyways elgato you know just saying shrink those apps down i mean i baby smash is tiny you know all my even all my.net applications are like 30 megs i mean come on i mean they're not you know they're tiny but yeah people are giving up anyways oh yeah i gotta go frank i'm just gonna i'm just gonna ramble here i'm just rambling at this point um
+
+37:05.94
+Frank
+So what's the conclusion of this podcast? Deploying apps is hard. it's It's like we just keep coming back to it over and over again in our mantras.
+
+37:14.42
+James
+Yeah. And it's the same because you know, I think of all that notarization stuff that opens stuff and all that other things. And I feel like all the Elgato apps and all these other like cool holiday hack projects that people did, it was like all over the place. Like everyone was just crazy stuff and there been standardization on it. If you get off the app store and it's the same on, on windows. Like if you look at a handsome and has like a cool app and I have a cool app and I have downloaders and updaters, they all do the same thing. It's all wacky. And on windows, they really don't want you to run apps that aren't notarized.
+
+37:41.62
+James
+I don't even know how to notarize them. i guess you got a signed cert or something like that. But it's like, they're like, are you sure? Are you really as sure? Like even the downloads, like, dude, I don't know, bro. So you got to put in a zip file. If you put the XE in a zip file, then everything's okay.
+
+37:55.10
+James
+So.
+
+37:56.21
+Frank
+Okay, I just have to say a good huge chunk of the Elgato apps is there's an entire web browser baked into every app, like in a an entire web browser.
+
+38:06.67
+Frank
+It's a part of the Qt distribution. So it is Qt.
+
+38:09.21
+James
+There it is There's QT.
+
+38:09.79
+Frank
+Qt should be fast, efficient, little native app, but they are shipping an entire web browser in every single app. And we can all guess why, because it's just some React nonsense.
+
+38:19.75
+James
+Oh my gosh. ah All right. All right, Frank. that's going to it for this week's Merge Conflict. Let us know you release your applications. If you're doing it better than us, let us know on YouTube. YouTube.com forward slash at Merge Conflict FM. You can find our beautiful faces every single week. That's going to for this podcast. So until next week, I'm James Montemagno.
+
+38:42.33
+Frank
+And I'm Frank Kruger. Thanks for watching and listening.
+
+38:45.98
+James
+Peace.
+
