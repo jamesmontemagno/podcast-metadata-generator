@@ -289,6 +289,7 @@ public class AppWorkflow
         var responseText = "";
         var lockObj = new object();
         var generationTask = default(Task<List<string>>);
+        var animationFrame = 0;
         
         await AnsiConsole.Live(new Panel(""))
             .AutoClear(false)
@@ -339,6 +340,21 @@ public class AppWorkflow
                         };
                         ctx.UpdateTarget(panel);
                     }
+                    else
+                    {
+                        // Animate waiting message
+                        var dots = new string('.', (animationFrame % 3) + 1).PadRight(3);
+                        panel = new Panel(new Markup($"[grey]Waiting for response{dots}[/]"))
+                        {
+                            Header = new PanelHeader("[bold] Generating Titles [/]"),
+                            Border = BoxBorder.Rounded,
+                            BorderStyle = new Style(Color.Blue),
+                            Padding = new Padding(1, 0),
+                            Expand = true
+                        };
+                        ctx.UpdateTarget(panel);
+                        animationFrame++;
+                    }
                     
                     await Task.Delay(50); // Update every 50ms
                 }
@@ -385,6 +401,7 @@ public class AppWorkflow
             var responseText = "";
             var lockObj = new object();
             var generationTask = default(Task<string>);
+            var animationFrame = 0;
             
             await AnsiConsole.Live(new Panel(""))
                 .AutoClear(false)
@@ -437,6 +454,21 @@ public class AppWorkflow
                             };
                             ctx.UpdateTarget(panel);
                         }
+                        else
+                        {
+                            // Animate waiting message
+                            var dots = new string('.', (animationFrame % 3) + 1).PadRight(3);
+                            panel = new Panel(new Markup($"[grey]Waiting for response{dots}[/]"))
+                            {
+                                Header = new PanelHeader($"[bold] Generating {length} Description [/]"),
+                                Border = BoxBorder.Rounded,
+                                BorderStyle = new Style(Color.Yellow),
+                                Padding = new Padding(1, 0),
+                                Expand = true
+                            };
+                            ctx.UpdateTarget(panel);
+                            animationFrame++;
+                        }
                         
                         await Task.Delay(50); // Update every 50ms
                     }
@@ -482,6 +514,7 @@ public class AppWorkflow
         var responseText = "";
         var lockObj = new object();
         var generationTask = default(Task<List<Chapter>>);
+        var animationFrame = 0;
         
         await AnsiConsole.Live(new Panel(""))
             .AutoClear(false)
@@ -531,6 +564,21 @@ public class AppWorkflow
                             Expand = true
                         };
                         ctx.UpdateTarget(panel);
+                    }
+                    else
+                    {
+                        // Animate waiting message
+                        var dots = new string('.', (animationFrame % 3) + 1).PadRight(3);
+                        panel = new Panel(new Markup($"[grey]Waiting for response{dots}[/]"))
+                        {
+                            Header = new PanelHeader("[bold] Generating Chapters [/]"),
+                            Border = BoxBorder.Rounded,
+                            BorderStyle = new Style(Color.Green),
+                            Padding = new Padding(1, 0),
+                            Expand = true
+                        };
+                        ctx.UpdateTarget(panel);
+                        animationFrame++;
                     }
                     
                     await Task.Delay(50); // Update every 50ms
