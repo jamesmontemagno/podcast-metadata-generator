@@ -21,16 +21,28 @@ Generate podcast metadata (titles, descriptions, chapters, SRT subtitles) from t
 ## 📋 Prerequisites
 
 - [.NET 10.0 SDK](https://dotnet.microsoft.com/download) or later
-- [GitHub Copilot CLI](https://docs.github.com/en/copilot/github-copilot-in-the-cli) installed and authenticated
+- [GitHub Copilot CLI](https://docs.github.com/en/copilot/how-tos/set-up/install-copilot-cli) installed and authenticated
 
 ### Installing GitHub Copilot CLI
 
+**macOS and Linux (Homebrew):**
 ```bash
-# Using GitHub CLI extension
-gh extension install github/gh-copilot
+brew install copilot-cli
+```
 
-# Or via npm
-npm install -g @github/copilot-cli
+**Windows (WinGet):**
+```powershell
+winget install GitHub.Copilot
+```
+
+**All platforms (npm, requires Node.js 22+):**
+```bash
+npm install -g @github/copilot
+```
+
+**macOS and Linux (install script):**
+```bash
+curl -fsSL https://gh.io/copilot-install | bash
 ```
 
 Then authenticate:
