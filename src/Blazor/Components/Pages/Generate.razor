@@ -1,0 +1,965 @@
+@page "/generate"
+@rendermode InteractiveServer
+@inject AppSettings Settings
+@inject TranscriptParser TranscriptParser
+@inject SrtConverter SrtConverter
+@inject OutputService OutputService
+@inject IJSRuntime JS
+
+<PageTitle>Generate Metadata</PageTitle>
+
+<h1>🚀 Generate Metadata</h1>
+
+@if (_errorMessage != null)
+{
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        @_errorMessage
+        <button type="button" class="btn-close" @onclick="() => _errorMessage = null"></button>
+    </div>
+}
+
+@if (_wasCancelled)
+{
+    <div class="alert alert-warning alert-dismissible fade show" role="alert">
+        <i class="bi bi-exclamation-triangle me-2"></i>Generation was cancelled. Partial results may be shown below.
+        <button type="button" class="btn-close" @onclick="() => _wasCancelled = false"></button>
+    </div>
+}
+
+@if (_transcript == null)
+{
+    <!-- Step 1: Upload Transcript -->
+    <div class="card">
+        <div class="card-header">
+            <h5 class="mb-0">Step 1: Upload Transcript</h5>
+        </div>
+        <div class="card-body">
+            <div class="mb-3">
+                <label for="transcriptFile" class="form-label">Transcript File (.txt or .srt)</label>
+                <InputFile id="transcriptFile" class="form-control" OnChange="HandleFileSelected" accept=".txt,.srt" />
+                <div class="form-text">Supports Zencastr, SRT, time-range formats, or plain text.</div>
+            </div>
+            
+            @if (_isLoadingFile)
+            {
+                <div class="d-flex align-items-center">
+                    <div class="spinner-border spinner-border-sm me-2" role="status"></div>
+                    <span>Loading transcript...</span>
+                </div>
+            }
+        </div>
+    </div>
+}
+else if (_result == null || _isGenerating)
+{
+    <!-- Step 2: Review & Configure -->
+    <div class="card mb-3">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">Step 2: Review Transcript & Options</h5>
+            <button class="btn btn-sm btn-outline-secondary" @onclick="ResetTranscript" disabled="@_isGenerating">Change File</button>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-4">
+                    <h6 class="text-muted mb-2">Transcript Info</h6>
+                    <table class="table table-sm">
+                        <tbody>
+                            <tr><td>File</td><td><strong>@Path.GetFileName(_transcript.FilePath)</strong></td></tr>
+                            <tr><td>Format</td><td>@_transcript.Format</td></tr>
+                            <tr><td>Has Timestamps</td><td>@(_transcript.HasTimestamps ? "Yes" : "No")</td></tr>
+                            <tr><td>Segments</td><td>@_transcript.Segments.Count</td></tr>
+                            <tr><td>Duration</td><td>@_transcript.DurationMinutes.ToString("F1") min</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="col-md-4">
+                    <h6 class="text-muted mb-2">What to Generate</h6>
+                    <div class="generation-options">
+                        <div class="form-check mb-2">
+                            <input class="form-check-input" type="checkbox" id="genTitles" 
+                                   @bind="_generateTitles" disabled="@_isGenerating" />
+                            <label class="form-check-label" for="genTitles">
+                                <i class="bi bi-card-heading me-1"></i> Episode Titles
+                            </label>
+                        </div>
+                        <div class="form-check mb-2">
+                            <input class="form-check-input" type="checkbox" id="genShortDesc" 
+                                   @bind="_generateShortDesc" disabled="@_isGenerating" />
+                            <label class="form-check-label" for="genShortDesc">
+                                <i class="bi bi-text-paragraph me-1"></i> Short Description
+                            </label>
+                        </div>
+                        <div class="form-check mb-2">
+                            <input class="form-check-input" type="checkbox" id="genMediumDesc" 
+                                   @bind="_generateMediumDesc" disabled="@_isGenerating" />
+                            <label class="form-check-label" for="genMediumDesc">
+                                <i class="bi bi-file-text me-1"></i> Medium Description
+                            </label>
+                        </div>
+                        <div class="form-check mb-2">
+                            <input class="form-check-input" type="checkbox" id="genLongDesc" 
+                                   @bind="_generateLongDesc" disabled="@_isGenerating" />
+                            <label class="form-check-label" for="genLongDesc">
+                                <i class="bi bi-file-richtext me-1"></i> Long Description
+                            </label>
+                        </div>
+                        @if (_transcript.HasTimestamps)
+                        {
+                            <div class="form-check mb-2">
+                                <input class="form-check-input" type="checkbox" id="genChapters" 
+                                       @bind="_generateChapters" disabled="@_isGenerating" />
+                                <label class="form-check-label" for="genChapters">
+                                    <i class="bi bi-list-ol me-1"></i> YouTube Chapters
+                                </label>
+                            </div>
+                        }
+                        <div class="mt-2">
+                            <button class="btn btn-sm btn-link p-0" @onclick="SelectAllOptions" disabled="@_isGenerating">Select All</button>
+                            <span class="text-muted mx-1">|</span>
+                            <button class="btn btn-sm btn-link p-0" @onclick="DeselectAllOptions" disabled="@_isGenerating">Deselect All</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <h6 class="text-muted mb-2">Episode Context</h6>
+                    <textarea class="form-control" rows="5" @bind="_episodeContext" 
+                        placeholder="Guest names, topic summary, etc. (optional)"
+                        disabled="@_isGenerating"></textarea>
+                </div>
+            </div>
+            
+            <hr />
+            
+            <div class="d-flex gap-2 align-items-center">
+                @if (!_isGenerating)
+                {
+                    <button class="btn btn-primary btn-lg" @onclick="StartGeneration" disabled="@(!HasAnyOptionSelected)">
+                        <i class="bi bi-stars me-2"></i>Generate Metadata
+                    </button>
+                    @if (!HasAnyOptionSelected)
+                    {
+                        <span class="text-muted">Select at least one option to generate</span>
+                    }
+                }
+                else
+                {
+                    <button class="btn btn-danger btn-lg" @onclick="CancelGeneration">
+                        <i class="bi bi-x-circle me-2"></i>Cancel Generation
+                    </button>
+                    <span class="text-muted ms-2">
+                        <span class="spinner-border spinner-border-sm me-1" role="status"></span>
+                        @_currentStep
+                    </span>
+                }
+            </div>
+        </div>
+    </div>
+    
+    @if (_isGenerating)
+    {
+        <!-- Generation Progress -->
+        <div class="card generation-card mb-3">
+            <div class="card-header">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0"><span class="pulse-icon">✨</span> AI Generation in Progress</h5>
+                    <span class="badge bg-primary">Step @(_currentStepIndex + 1) of @_totalSteps</span>
+                </div>
+            </div>
+            <div class="card-body">
+                <!-- Overall Progress Bar -->
+                <div class="progress-container mb-4">
+                    <div class="progress-label d-flex justify-content-between mb-2">
+                        <span>Overall Progress</span>
+                        <span>@((_currentStepIndex * 100 / Math.Max(_totalSteps, 1)))%</span>
+                    </div>
+                    <div class="progress progress-animated">
+                        <div class="progress-bar progress-bar-striped progress-bar-animated bg-gradient-primary" 
+                             role="progressbar" 
+                             style="width: @((_currentStepIndex * 100 / Math.Max(_totalSteps, 1)))%">
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Step Indicators -->
+                <div class="step-indicators mb-4">
+                    @foreach (var (step, index) in _steps.Select((s, i) => (s, i)))
+                    {
+                        <div class="step-item @(step.IsComplete ? "completed" : "") @(step.IsActive ? "active" : "")">
+                            <div class="step-icon">
+                                @if (step.IsComplete)
+                                {
+                                    <i class="bi bi-check-lg"></i>
+                                }
+                                else if (step.IsActive)
+                                {
+                                    <div class="spinner-border spinner-border-sm" role="status"></div>
+                                }
+                                else
+                                {
+                                    <span>@step.Icon</span>
+                                }
+                            </div>
+                            <div class="step-label">@step.Name</div>
+                        </div>
+                        @if (index < _steps.Count - 1)
+                        {
+                            <div class="step-connector @(step.IsComplete ? "completed" : "")"></div>
+                        }
+                    }
+                </div>
+                
+                <!-- Current Step Detail -->
+                <div class="current-step-card mb-3">
+                    <div class="d-flex align-items-center mb-2">
+                        <div class="current-step-indicator me-2"></div>
+                        <strong>@_currentStep</strong>
+                    </div>
+                    <div class="typing-indicator">
+                        <span></span><span></span><span></span>
+                    </div>
+                </div>
+                
+                <!-- Streaming Output -->
+                <div class="streaming-output">
+                    <div class="streaming-header">
+                        <i class="bi bi-terminal me-2"></i>AI Output (All Steps)
+                    </div>
+                    <pre class="mb-0">@_streamingText<span class="cursor">▊</span></pre>
+                </div>
+            </div>
+        </div>
+    }
+}
+
+@if (_result != null)
+{
+    <!-- Step 3: Results -->
+    <div class="card mb-3">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">@(_isGenerating ? "Partial Results" : "Results")</h5>
+            <div class="d-flex gap-2">
+                @if (!_isGenerating && HasAnyResultToExport)
+                {
+                    <button class="btn btn-sm btn-success" @onclick="ToggleExportPanel">
+                        <i class="bi bi-download me-1"></i>@(_showExportPanel ? "Hide Export" : "Export Selected")
+                    </button>
+                }
+                @if (!_isGenerating)
+                {
+                    <button class="btn btn-sm btn-outline-primary" @onclick="ResetAll">
+                        <i class="bi bi-arrow-repeat me-1"></i>Start Over
+                    </button>
+                }
+            </div>
+        </div>
+        <div class="card-body">
+            <ul class="nav nav-tabs" id="resultTabs" role="tablist">
+                @if (_result.Titles.Count > 0)
+                {
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link @(_activeResultTab == "titles" ? "active" : "")" 
+                                @onclick="SetActiveTitlesTab" type="button">
+                            <i class="bi bi-card-heading me-1"></i>Titles
+                            @if (_exportTitle)
+                            {
+                                <span class="badge bg-success ms-1">✓</span>
+                            }
+                        </button>
+                    </li>
+                }
+                @if (_result.Descriptions.Count > 0)
+                {
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link @(_activeResultTab == "descriptions" ? "active" : "")" 
+                                @onclick="SetActiveDescriptionsTab" type="button">
+                            <i class="bi bi-file-text me-1"></i>Descriptions
+                            @{
+                                var selectedDescCount = (_exportShortDesc && _result.Descriptions.ContainsKey(DescriptionLength.Short) ? 1 : 0) +
+                                                       (_exportMediumDesc && _result.Descriptions.ContainsKey(DescriptionLength.Medium) ? 1 : 0) +
+                                                       (_exportLongDesc && _result.Descriptions.ContainsKey(DescriptionLength.Long) ? 1 : 0);
+                            }
+                            @if (selectedDescCount > 0)
+                            {
+                                <span class="badge bg-success ms-1">@selectedDescCount</span>
+                            }
+                        </button>
+                    </li>
+                }
+                @if (_result.Chapters.Count > 0)
+                {
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link @(_activeResultTab == "chapters" ? "active" : "")" 
+                                @onclick="SetActiveChaptersTab" type="button">
+                            <i class="bi bi-list-ol me-1"></i>Chapters
+                            @if (_exportChapters)
+                            {
+                                <span class="badge bg-success ms-1">✓</span>
+                            }
+                        </button>
+                    </li>
+                }
+            </ul>
+            
+            <div class="tab-content p-3 border border-top-0 rounded-bottom">
+                @if (_activeResultTab == "titles" && _result.Titles.Count > 0)
+                {
+                    <div class="tab-pane fade show active" role="tabpanel">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h6 class="mb-0">Select a title for export:</h6>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="exportTitleCheck" 
+                                       @bind="_exportTitle" />
+                                <label class="form-check-label" for="exportTitleCheck">
+                                    Include in export
+                                </label>
+                            </div>
+                        </div>
+                        @for (var i = 0; i < _result.Titles.Count; i++)
+                        {
+                            var index = i;
+                            <div class="form-check result-item @(_selectedTitleIndex == i ? "selected" : "")">
+                                <input class="form-check-input" type="radio" name="titleSelection" 
+                                    id="title@(i)" checked="@(_selectedTitleIndex == i)"
+                                    @onchange="() => SelectTitle(index)" />
+                                <label class="form-check-label flex-grow-1" for="title@(i)">
+                                    @_result.Titles[i]
+                                </label>
+                                <button class="btn btn-sm btn-link" @onclick="() => CopyToClipboard(_result.Titles[index])">
+                                    <i class="bi bi-clipboard"></i>
+                                </button>
+                            </div>
+                        }
+                    </div>
+                }
+                
+                @if (_activeResultTab == "descriptions" && _result.Descriptions.Count > 0)
+                {
+                    <div class="tab-pane fade show active" role="tabpanel">
+                        @if (_result.Descriptions.TryGetValue(DescriptionLength.Short, out var shortDesc))
+                        {
+                            <div class="mb-4 result-item @(_exportShortDesc ? "selected" : "")">
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <div class="d-flex align-items-center gap-2">
+                                        <input class="form-check-input" type="checkbox" id="exportShortDesc" 
+                                               @bind="_exportShortDesc" />
+                                        <h6 class="mb-0">Short Description</h6>
+                                    </div>
+                                    <button class="btn btn-sm btn-outline-secondary" @onclick="() => CopyToClipboard(shortDesc)">
+                                        <i class="bi bi-clipboard me-1"></i>Copy
+                                    </button>
+                                </div>
+                                <div class="bg-light p-3 rounded">
+                                    <p class="mb-0" style="white-space: pre-wrap;">@shortDesc</p>
+                                </div>
+                            </div>
+                        }
+                        
+                        @if (_result.Descriptions.TryGetValue(DescriptionLength.Medium, out var mediumDesc))
+                        {
+                            <div class="mb-4 result-item @(_exportMediumDesc ? "selected" : "")">
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <div class="d-flex align-items-center gap-2">
+                                        <input class="form-check-input" type="checkbox" id="exportMediumDesc" 
+                                               @bind="_exportMediumDesc" />
+                                        <h6 class="mb-0">Medium Description</h6>
+                                    </div>
+                                    <button class="btn btn-sm btn-outline-secondary" @onclick="() => CopyToClipboard(mediumDesc)">
+                                        <i class="bi bi-clipboard me-1"></i>Copy
+                                    </button>
+                                </div>
+                                <div class="bg-light p-3 rounded">
+                                    <p class="mb-0" style="white-space: pre-wrap;">@mediumDesc</p>
+                                </div>
+                            </div>
+                        }
+                        
+                        @if (_result.Descriptions.TryGetValue(DescriptionLength.Long, out var longDesc))
+                        {
+                            <div class="mb-4 result-item @(_exportLongDesc ? "selected" : "")">
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <div class="d-flex align-items-center gap-2">
+                                        <input class="form-check-input" type="checkbox" id="exportLongDesc" 
+                                               @bind="_exportLongDesc" />
+                                        <h6 class="mb-0">Long Description</h6>
+                                    </div>
+                                    <button class="btn btn-sm btn-outline-secondary" @onclick="() => CopyToClipboard(longDesc)">
+                                        <i class="bi bi-clipboard me-1"></i>Copy
+                                    </button>
+                                </div>
+                                <div class="bg-light p-3 rounded">
+                                    <p class="mb-0" style="white-space: pre-wrap;">@longDesc</p>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                }
+                
+                @if (_activeResultTab == "chapters" && _result.Chapters.Count > 0)
+                {
+                    <div class="tab-pane fade show active" role="tabpanel">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <div class="d-flex align-items-center gap-2">
+                                <input class="form-check-input" type="checkbox" id="exportChaptersCheck" 
+                                       @bind="_exportChapters" />
+                                <h6 class="mb-0">YouTube Chapters</h6>
+                            </div>
+                            <button class="btn btn-sm btn-outline-secondary" @onclick="CopyChapters">
+                                <i class="bi bi-clipboard me-1"></i>Copy All
+                            </button>
+                        </div>
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th style="width: 100px;">Timestamp</th>
+                                    <th>Title</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var chapter in _result.Chapters)
+                                {
+                                    <tr>
+                                        <td><code>@chapter.Timestamp</code></td>
+                                        <td>@chapter.Title</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+                
+                @if (string.IsNullOrEmpty(_activeResultTab) || 
+                     (_activeResultTab == "titles" && _result.Titles.Count == 0) ||
+                     (_activeResultTab == "descriptions" && _result.Descriptions.Count == 0) ||
+                     (_activeResultTab == "chapters" && _result.Chapters.Count == 0))
+                {
+                    <div class="text-center text-muted py-4">
+                        <i class="bi bi-hourglass-split fs-1"></i>
+                        <p class="mt-2">Results will appear here as they're generated...</p>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+    
+    <!-- Export Panel -->
+    @if (_showExportPanel && !_isGenerating)
+    {
+        <div class="card mb-3 export-panel">
+            <div class="card-header bg-success text-white">
+                <h5 class="mb-0"><i class="bi bi-download me-2"></i>Export All Selected</h5>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <h6>What will be exported:</h6>
+                    <ul class="export-summary">
+                        @if (_exportTitle && _result.Titles.Count > 0)
+                        {
+                            <li><i class="bi bi-check-circle text-success me-2"></i><strong>Title:</strong> @(_result.Titles.ElementAtOrDefault(_selectedTitleIndex) ?? "None selected")</li>
+                        }
+                        @if (_exportShortDesc && _result.Descriptions.ContainsKey(DescriptionLength.Short))
+                        {
+                            <li><i class="bi bi-check-circle text-success me-2"></i><strong>Short Description</strong></li>
+                        }
+                        @if (_exportMediumDesc && _result.Descriptions.ContainsKey(DescriptionLength.Medium))
+                        {
+                            <li><i class="bi bi-check-circle text-success me-2"></i><strong>Medium Description</strong></li>
+                        }
+                        @if (_exportLongDesc && _result.Descriptions.ContainsKey(DescriptionLength.Long))
+                        {
+                            <li><i class="bi bi-check-circle text-success me-2"></i><strong>Long Description</strong></li>
+                        }
+                        @if (_exportChapters && _result.Chapters.Count > 0)
+                        {
+                            <li><i class="bi bi-check-circle text-success me-2"></i><strong>YouTube Chapters</strong> (@_result.Chapters.Count chapters)</li>
+                        }
+                    </ul>
+                </div>
+                
+                <div class="export-preview mb-3">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <h6 class="mb-0">Preview</h6>
+                        <small class="text-muted">@GetExportPreview().Length characters</small>
+                    </div>
+                    <pre class="export-preview-content">@GetExportPreview()</pre>
+                </div>
+                
+                <div class="d-flex gap-2">
+                    <button class="btn btn-success btn-lg" @onclick="CopyExport">
+                        <i class="bi bi-clipboard me-2"></i>Copy to Clipboard
+                    </button>
+                    <button class="btn btn-outline-success btn-lg" @onclick="DownloadExport">
+                        <i class="bi bi-file-earmark-arrow-down me-2"></i>Download as .txt
+                    </button>
+                </div>
+            </div>
+        </div>
+    }
+    
+    <!-- Copy notification -->
+    @if (_showCopyNotification)
+    {
+        <div class="position-fixed bottom-0 end-0 p-3" style="z-index: 1050;">
+            <div class="toast show" role="alert">
+                <div class="toast-body">
+                    ✓ Copied to clipboard!
+                </div>
+            </div>
+        </div>
+    }
+}
+
+@code {
+    private Transcript? _transcript;
+    private GenerationResult? _result;
+    private string? _episodeContext;
+    private string? _errorMessage;
+    private bool _isLoadingFile;
+    private bool _isGenerating;
+    private string _currentStep = "";
+    private string _streamingText = "";
+    private int _selectedTitleIndex;
+    private bool _showCopyNotification;
+    private int _currentStepIndex;
+    private int _totalSteps;
+    private List<GenerationStep> _steps = [];
+    private string _activeResultTab = "titles";
+    
+    // Generation options
+    private bool _generateTitles = true;
+    private bool _generateShortDesc = true;
+    private bool _generateMediumDesc = true;
+    private bool _generateLongDesc = true;
+    private bool _generateChapters = true;
+    
+    // Cancellation
+    private CancellationTokenSource? _cancellationTokenSource;
+    private bool _wasCancelled;
+    
+    // Export selections
+    private bool _exportTitle = true;
+    private bool _exportShortDesc = true;
+    private bool _exportMediumDesc = true;
+    private bool _exportLongDesc = true;
+    private bool _exportChapters = true;
+    private bool _showExportPanel;
+    
+    private bool HasAnyOptionSelected => _generateTitles || _generateShortDesc || _generateMediumDesc || _generateLongDesc || (_transcript?.HasTimestamps == true && _generateChapters);
+    
+    private record GenerationStep(string Name, string Icon, bool IsComplete, bool IsActive);
+    
+    private void SelectAllOptions()
+    {
+        _generateTitles = true;
+        _generateShortDesc = true;
+        _generateMediumDesc = true;
+        _generateLongDesc = true;
+        _generateChapters = true;
+    }
+    
+    private void DeselectAllOptions()
+    {
+        _generateTitles = false;
+        _generateShortDesc = false;
+        _generateMediumDesc = false;
+        _generateLongDesc = false;
+        _generateChapters = false;
+    }
+    
+    private async Task HandleFileSelected(InputFileChangeEventArgs e)
+    {
+        _isLoadingFile = true;
+        _errorMessage = null;
+        StateHasChanged();
+        
+        try
+        {
+            var file = e.File;
+            if (file == null) 
+            {
+                _errorMessage = "No file selected.";
+                return;
+            }
+            
+            // Read file content
+            using var stream = file.OpenReadStream(maxAllowedSize: 10 * 1024 * 1024); // 10MB max
+            using var reader = new StreamReader(stream);
+            var content = await reader.ReadToEndAsync();
+            
+            if (string.IsNullOrWhiteSpace(content))
+            {
+                _errorMessage = "The uploaded file is empty.";
+                return;
+            }
+            
+            // Parse transcript
+            _transcript = TranscriptParser.ParseContent(file.Name, content);
+        }
+        catch (Exception ex)
+        {
+            _errorMessage = $"Failed to load transcript: {ex.Message}";
+            _transcript = null;
+        }
+        finally
+        {
+            _isLoadingFile = false;
+            await InvokeAsync(StateHasChanged);
+        }
+    }
+    
+    private async Task StartGeneration()
+    {
+        if (_transcript == null) return;
+        
+        _isGenerating = true;
+        _streamingText = "";
+        _errorMessage = null;
+        _wasCancelled = false;
+        _currentStepIndex = 0;
+        _result = new GenerationResult();
+        _cancellationTokenSource = new CancellationTokenSource();
+        
+        // Build step list based on selected options
+        _steps = [new GenerationStep("Initialize", "🚀", false, false)];
+        
+        if (_generateTitles)
+            _steps.Add(new GenerationStep("Titles", "📝", false, false));
+        if (_generateShortDesc)
+            _steps.Add(new GenerationStep("Short", "📄", false, false));
+        if (_generateMediumDesc)
+            _steps.Add(new GenerationStep("Medium", "📃", false, false));
+        if (_generateLongDesc)
+            _steps.Add(new GenerationStep("Long", "📜", false, false));
+        if (_transcript.HasTimestamps && _generateChapters)
+            _steps.Add(new GenerationStep("Chapters", "📑", false, false));
+        
+        _totalSteps = _steps.Count;
+        
+        // Set initial active tab based on what's being generated
+        if (_generateTitles) _activeResultTab = "titles";
+        else if (_generateShortDesc || _generateMediumDesc || _generateLongDesc) _activeResultTab = "descriptions";
+        else if (_generateChapters) _activeResultTab = "chapters";
+        
+        try
+        {
+            var token = _cancellationTokenSource.Token;
+            
+            // Apply episode context
+            Settings.EpisodeContext = _episodeContext;
+            
+            await using var generator = new MetadataGenerator(Settings);
+            
+            var stepIndex = 0;
+            
+            // Step 0: Initialize
+            UpdateStep(stepIndex, "Initializing AI...");
+            await generator.InitializeAsync();
+            token.ThrowIfCancellationRequested();
+            CompleteStep(stepIndex);
+            stepIndex++;
+            
+            // Generate titles
+            if (_generateTitles)
+            {
+                UpdateStep(stepIndex, "Generating catchy episode titles...");
+                AppendToStream("\n═══════════════════════════════════════\n");
+                AppendToStream("📝 GENERATING TITLES\n");
+                AppendToStream("═══════════════════════════════════════\n\n");
+                
+                _result.Titles = await generator.GenerateTitlesAsync(
+                    _transcript,
+                    chunk => AppendToStream(chunk),
+                    token);
+                
+                token.ThrowIfCancellationRequested();
+                CompleteStep(stepIndex);
+                stepIndex++;
+                await InvokeAsync(StateHasChanged);
+            }
+            
+            // Generate short description
+            if (_generateShortDesc)
+            {
+                UpdateStep(stepIndex, "Crafting short description...");
+                AppendToStream("\n\n═══════════════════════════════════════\n");
+                AppendToStream("📄 GENERATING SHORT DESCRIPTION\n");
+                AppendToStream("═══════════════════════════════════════\n\n");
+                
+                var desc = await generator.GenerateDescriptionAsync(
+                    _transcript,
+                    DescriptionLength.Short,
+                    _result.Titles.FirstOrDefault(),
+                    chunk => AppendToStream(chunk),
+                    token);
+                
+                _result.Descriptions[DescriptionLength.Short] = desc;
+                token.ThrowIfCancellationRequested();
+                CompleteStep(stepIndex);
+                stepIndex++;
+                await InvokeAsync(StateHasChanged);
+            }
+            
+            // Generate medium description
+            if (_generateMediumDesc)
+            {
+                UpdateStep(stepIndex, "Crafting medium description...");
+                AppendToStream("\n\n═══════════════════════════════════════\n");
+                AppendToStream("📃 GENERATING MEDIUM DESCRIPTION\n");
+                AppendToStream("═══════════════════════════════════════\n\n");
+                
+                var desc = await generator.GenerateDescriptionAsync(
+                    _transcript,
+                    DescriptionLength.Medium,
+                    _result.Titles.FirstOrDefault(),
+                    chunk => AppendToStream(chunk),
+                    token);
+                
+                _result.Descriptions[DescriptionLength.Medium] = desc;
+                token.ThrowIfCancellationRequested();
+                CompleteStep(stepIndex);
+                stepIndex++;
+                await InvokeAsync(StateHasChanged);
+            }
+            
+            // Generate long description
+            if (_generateLongDesc)
+            {
+                UpdateStep(stepIndex, "Crafting long description...");
+                AppendToStream("\n\n═══════════════════════════════════════\n");
+                AppendToStream("📜 GENERATING LONG DESCRIPTION\n");
+                AppendToStream("═══════════════════════════════════════\n\n");
+                
+                var desc = await generator.GenerateDescriptionAsync(
+                    _transcript,
+                    DescriptionLength.Long,
+                    _result.Titles.FirstOrDefault(),
+                    chunk => AppendToStream(chunk),
+                    token);
+                
+                _result.Descriptions[DescriptionLength.Long] = desc;
+                token.ThrowIfCancellationRequested();
+                CompleteStep(stepIndex);
+                stepIndex++;
+                await InvokeAsync(StateHasChanged);
+            }
+            
+            // Generate chapters
+            if (_transcript.HasTimestamps && _generateChapters)
+            {
+                UpdateStep(stepIndex, "Creating chapter markers...");
+                AppendToStream("\n\n═══════════════════════════════════════\n");
+                AppendToStream("📑 GENERATING CHAPTERS\n");
+                AppendToStream("═══════════════════════════════════════\n\n");
+                
+                _result.Chapters = await generator.GenerateChaptersAsync(
+                    _transcript,
+                    chunk => AppendToStream(chunk),
+                    token);
+                    
+                CompleteStep(stepIndex);
+                await InvokeAsync(StateHasChanged);
+            }
+            
+            AppendToStream("\n\n✅ Generation complete!");
+        }
+        catch (OperationCanceledException)
+        {
+            _wasCancelled = true;
+            AppendToStream("\n\n⚠️ Generation cancelled by user.");
+        }
+        catch (Exception ex)
+        {
+            _errorMessage = $"Generation failed: {ex.Message}";
+        }
+        finally
+        {
+            _isGenerating = false;
+            _cancellationTokenSource?.Dispose();
+            _cancellationTokenSource = null;
+            await InvokeAsync(StateHasChanged);
+        }
+    }
+    
+    private void AppendToStream(string text)
+    {
+        _streamingText += text;
+        InvokeAsync(StateHasChanged);
+    }
+    
+    private void CancelGeneration()
+    {
+        _cancellationTokenSource?.Cancel();
+    }
+    
+    private void UpdateStep(int stepIndex, string description)
+    {
+        _currentStepIndex = stepIndex;
+        _currentStep = description;
+        
+        // Update step states
+        for (var i = 0; i < _steps.Count; i++)
+        {
+            _steps[i] = _steps[i] with 
+            { 
+                IsActive = i == stepIndex,
+                IsComplete = i < stepIndex
+            };
+        }
+        
+        StateHasChanged();
+    }
+    
+    private void CompleteStep(int stepIndex)
+    {
+        if (stepIndex < _steps.Count)
+        {
+            _steps[stepIndex] = _steps[stepIndex] with { IsComplete = true, IsActive = false };
+            _currentStepIndex = stepIndex + 1;
+            StateHasChanged();
+        }
+    }
+    
+    private void SelectTitle(int index)
+    {
+        _selectedTitleIndex = index;
+        if (_result != null)
+        {
+            _result.SelectedTitle = _result.Titles[index];
+        }
+    }
+    
+    private void SetActiveTitlesTab() => _activeResultTab = "titles";
+    private void SetActiveDescriptionsTab() => _activeResultTab = "descriptions";
+    private void SetActiveChaptersTab() => _activeResultTab = "chapters";
+    
+    private async Task CopyToClipboard(string text)
+    {
+        try
+        {
+            await JS.InvokeVoidAsync("copyToClipboard", text);
+            _showCopyNotification = true;
+            StateHasChanged();
+            await Task.Delay(2000);
+            _showCopyNotification = false;
+            StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Copy failed: {ex.Message}");
+        }
+    }
+    
+    private async Task CopyChapters()
+    {
+        if (_result?.Chapters == null) return;
+        var text = SrtConverter.FormatChaptersForYouTube(_result.Chapters);
+        await CopyToClipboard(text);
+    }
+    
+    private void ResetTranscript()
+    {
+        _transcript = null;
+        _episodeContext = null;
+        _result = null;
+    }
+    
+    private void ResetAll()
+    {
+        _transcript = null;
+        _result = null;
+        _episodeContext = null;
+        _selectedTitleIndex = 0;
+        _streamingText = "";
+        _wasCancelled = false;
+        _activeResultTab = "titles";
+        _showExportPanel = false;
+    }
+    
+    private bool HasAnyResultToExport => _result != null && 
+        ((_exportTitle && _result.Titles.Count > 0) ||
+         (_exportShortDesc && _result.Descriptions.ContainsKey(DescriptionLength.Short)) ||
+         (_exportMediumDesc && _result.Descriptions.ContainsKey(DescriptionLength.Medium)) ||
+         (_exportLongDesc && _result.Descriptions.ContainsKey(DescriptionLength.Long)) ||
+         (_exportChapters && _result.Chapters.Count > 0));
+    
+    private void ToggleExportPanel()
+    {
+        _showExportPanel = !_showExportPanel;
+    }
+    
+    private string GetExportPreview()
+    {
+        if (_result == null) return "";
+        
+        var sb = new System.Text.StringBuilder();
+        
+        // Title
+        if (_exportTitle && _result.Titles.Count > 0)
+        {
+            sb.AppendLine("═══════════════════════════════════════");
+            sb.AppendLine("EPISODE TITLE");
+            sb.AppendLine("═══════════════════════════════════════");
+            sb.AppendLine(_result.Titles.ElementAtOrDefault(_selectedTitleIndex) ?? "");
+            sb.AppendLine();
+        }
+        
+        // Short Description
+        if (_exportShortDesc && _result.Descriptions.TryGetValue(DescriptionLength.Short, out var shortDesc))
+        {
+            sb.AppendLine("═══════════════════════════════════════");
+            sb.AppendLine("SHORT DESCRIPTION");
+            sb.AppendLine("═══════════════════════════════════════");
+            sb.AppendLine(shortDesc);
+            sb.AppendLine();
+        }
+        
+        // Medium Description
+        if (_exportMediumDesc && _result.Descriptions.TryGetValue(DescriptionLength.Medium, out var mediumDesc))
+        {
+            sb.AppendLine("═══════════════════════════════════════");
+            sb.AppendLine("MEDIUM DESCRIPTION");
+            sb.AppendLine("═══════════════════════════════════════");
+            sb.AppendLine(mediumDesc);
+            sb.AppendLine();
+        }
+        
+        // Long Description
+        if (_exportLongDesc && _result.Descriptions.TryGetValue(DescriptionLength.Long, out var longDesc))
+        {
+            sb.AppendLine("═══════════════════════════════════════");
+            sb.AppendLine("LONG DESCRIPTION");
+            sb.AppendLine("═══════════════════════════════════════");
+            sb.AppendLine(longDesc);
+            sb.AppendLine();
+        }
+        
+        // Chapters
+        if (_exportChapters && _result.Chapters.Count > 0)
+        {
+            sb.AppendLine("═══════════════════════════════════════");
+            sb.AppendLine("YOUTUBE CHAPTERS");
+            sb.AppendLine("═══════════════════════════════════════");
+            foreach (var chapter in _result.Chapters)
+            {
+                sb.AppendLine($"{chapter.Timestamp} {chapter.Title}");
+            }
+        }
+        
+        return sb.ToString().TrimEnd();
+    }
+    
+    private async Task CopyExport()
+    {
+        var exportText = GetExportPreview();
+        await CopyToClipboard(exportText);
+    }
+    
+    private async Task DownloadExport()
+    {
+        var exportText = GetExportPreview();
+        var fileName = _transcript != null 
+            ? $"{Path.GetFileNameWithoutExtension(_transcript.FilePath)}-metadata.txt"
+            : "podcast-metadata.txt";
+        
+        await JS.InvokeVoidAsync("downloadTextFile", fileName, exportText);
+    }
+}

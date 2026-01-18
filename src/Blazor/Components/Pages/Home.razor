@@ -1,0 +1,154 @@
+@page "/"
+@rendermode @(new InteractiveServerRenderMode(prerender: false))
+@inject CopilotAuthService CopilotAuth
+
+<PageTitle>Podcast Metadata Generator</PageTitle>
+
+<h1>🎙️ Podcast Metadata Generator</h1>
+
+<p class="lead">
+    Generate titles, descriptions, chapters, and SRT files from your podcast transcripts using AI.
+</p>
+
+@if (_isLoading)
+{
+    <div class="loading-overlay-card">
+        <div class="card">
+            <div class="card-body text-center py-5">
+                <div class="loading-spinner mb-3">
+                    <div class="spinner-ring"></div>
+                    <i class="bi bi-cpu loading-icon"></i>
+                </div>
+                <h5 class="loading-text">Checking System Status</h5>
+                <p class="text-muted mb-0">Verifying Copilot CLI installation...</p>
+            </div>
+        </div>
+    </div>
+}
+else if (_copilotStatus != null)
+{
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5 class="mb-0">System Status</h5>
+        </div>
+        <div class="card-body">
+            <table class="table table-sm mb-0">
+                <tbody>
+                    <tr>
+                        <td>Copilot CLI Installed</td>
+                        <td>
+                            @if (_copilotStatus.IsInstalled)
+                            {
+                                <span class="badge bg-success">✓ Yes</span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-danger">✗ No</span>
+                            }
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>GH_TOKEN Environment Variable</td>
+                        <td>
+                            @if (_copilotStatus.IsTokenSet)
+                            {
+                                <span class="badge bg-success">✓ Set</span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-warning text-dark">○ Not Set</span>
+                            }
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>Authenticated</td>
+                        <td>
+                            @if (_copilotStatus.IsAuthenticated)
+                            {
+                                <span class="badge bg-success">✓ Yes</span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-danger">✗ No</span>
+                            }
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+            
+            @if (!string.IsNullOrEmpty(_copilotStatus.ErrorMessage))
+            {
+                <div class="alert alert-warning mt-3 mb-0">
+                    @_copilotStatus.ErrorMessage
+                </div>
+            }
+        </div>
+    </div>
+    
+    @if (_copilotStatus.IsInstalled && (_copilotStatus.IsTokenSet || _copilotStatus.IsAuthenticated))
+    {
+        <div class="d-grid gap-2 d-md-flex">
+            <a href="/generate" class="btn btn-primary btn-lg">
+                🚀 Start Generating
+            </a>
+            <a href="/settings" class="btn btn-outline-secondary btn-lg">
+                ⚙️ Settings
+            </a>
+        </div>
+    }
+    else
+    {
+        <div class="alert alert-danger">
+            <h5>Setup Required</h5>
+            <p>Please complete the following steps to use this application:</p>
+            <ol>
+                @if (!_copilotStatus.IsInstalled)
+                {
+                    <li>
+                        <strong>Install Copilot CLI:</strong>
+                        <code>npm install -g @@github/copilot</code> or <code>brew install copilot</code>
+                    </li>
+                }
+                @if (!_copilotStatus.IsTokenSet && !_copilotStatus.IsAuthenticated)
+                {
+                    <li>
+                        <strong>Authenticate:</strong>
+                        <code>copilot auth login</code> or set <code>GH_TOKEN</code> environment variable
+                    </li>
+                }
+            </ol>
+        </div>
+    }
+}
+
+<hr class="my-4" />
+
+<div class="row">
+    <div class="col-md-4">
+        <h4>📝 Titles</h4>
+        <p>Generate multiple engaging title suggestions for your episode.</p>
+    </div>
+    <div class="col-md-4">
+        <h4>📄 Descriptions</h4>
+        <p>Create short, medium, and long descriptions optimized for different platforms.</p>
+    </div>
+    <div class="col-md-4">
+        <h4>📑 Chapters</h4>
+        <p>Auto-generate YouTube chapters with timestamps from your transcript.</p>
+    </div>
+</div>
+
+@code {
+    private bool _isLoading = true;
+    private CopilotAuthService.CopilotStatus? _copilotStatus;
+    
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            _copilotStatus = await CopilotAuth.CheckStatusAsync();
+            _isLoading = false;
+            await InvokeAsync(StateHasChanged);
+        }
+    }
+}

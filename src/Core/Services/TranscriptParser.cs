@@ -1,7 +1,7 @@
 using System.Text.RegularExpressions;
-using PodcastMetadataGenerator.Models;
+using PodcastMetadataGenerator.Core.Models;
 
-namespace PodcastMetadataGenerator.Services;
+namespace PodcastMetadataGenerator.Core.Services;
 
 /// <summary>
 /// Parses transcript files in various formats into a unified Transcript model.
@@ -41,7 +41,15 @@ public partial class TranscriptParser
             throw new FileNotFoundException($"Transcript file not found: {filePath}");
         
         var rawContent = await File.ReadAllTextAsync(filePath);
-        var lines = rawContent.Split(['\n', '\r'], StringSplitOptions.RemoveEmptyEntries);
+        return ParseContent(filePath, rawContent);
+    }
+    
+    /// <summary>
+    /// Parses transcript content from a string (useful for Blazor file uploads).
+    /// </summary>
+    public Transcript ParseContent(string fileName, string content)
+    {
+        var lines = content.Split(['\n', '\r'], StringSplitOptions.RemoveEmptyEntries);
         var format = DetectFormat(lines);
         
         // Try to parse structured formats, fall back to plain text
@@ -60,9 +68,9 @@ public partial class TranscriptParser
         
         return new Transcript
         {
-            FilePath = filePath,
+            FilePath = fileName,
             Format = format,
-            RawContent = rawContent,
+            RawContent = content,
             Segments = segments
         };
     }

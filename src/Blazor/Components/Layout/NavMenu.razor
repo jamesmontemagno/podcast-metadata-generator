@@ -1,0 +1,49 @@
+<div class="sidebar-header">
+    <a class="brand-logo" href="">
+        <div class="brand-icon">
+            <i class="bi bi-soundwave"></i>
+        </div>
+        <div class="brand-text">
+            <span class="brand-name">Podcast AI</span>
+            <span class="brand-tagline">Metadata Generator</span>
+        </div>
+    </a>
+</div>
+
+<input type="checkbox" title="Navigation menu" class="navbar-toggler" />
+
+<div class="nav-scrollable" onclick="document.querySelector('.navbar-toggler').click()">
+    <div class="nav-section-label">Navigation</div>
+    <nav class="flex-column">
+        <div class="nav-item px-3">
+            <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
+                <i class="bi bi-house-door-fill"></i>
+                <span>Home</span>
+            </NavLink>
+        </div>
+        <div class="nav-item px-3">
+            <NavLink class="nav-link" href="generate">
+                <i class="bi bi-stars"></i>
+                <span>Generate</span>
+            </NavLink>
+        </div>
+        <div class="nav-item px-3">
+            <NavLink class="nav-link" href="settings">
+                <i class="bi bi-sliders"></i>
+                <span>Settings</span>
+            </NavLink>
+        </div>
+    </nav>
+    
+    <div class="sidebar-footer">
+        <div class="nav-section-label">Resources</div>
+        <a href="https://github.com/jamesmontemagno/podcast-metadata-generator" target="_blank" class="footer-link">
+            <i class="bi bi-github"></i>
+            <span>View on GitHub</span>
+        </a>
+        <div class="footer-badge">
+            <i class="bi bi-cpu"></i>
+            <span>Powered by GitHub Copilot</span>
+        </div>
+    </div>
+</div>

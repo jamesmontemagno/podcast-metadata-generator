@@ -1,0 +1,143 @@
+using System.Text.Json;
+using PodcastMetadataGenerator.Core.Models;
+
+namespace PodcastMetadataGenerator.Core.Services;
+
+/// <summary>
+/// Handles loading and saving application settings.
+/// </summary>
+public class SettingsService
+{
+    private readonly string _settingsPath;
+    
+    private static readonly JsonSerializerOptions JsonOptions = new()
+    {
+        WriteIndented = true
+    };
+    
+    public SettingsService(string? settingsPath = null)
+    {
+        _settingsPath = settingsPath ?? GetDefaultSettingsPath();
+    }
+    
+    /// <summary>
+    /// Gets the default settings file path in the user's home directory.
+    /// </summary>
+    public static string GetDefaultSettingsPath()
+    {
+        var configDir = Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
+            ".podcast-metadata-generator");
+        
+        return Path.Combine(configDir, "settings.json");
+    }
+    
+    /// <summary>
+    /// Loads settings from disk, returning defaults if not found.
+    /// </summary>
+    public async Task<AppSettings> LoadAsync()
+    {
+        try
+        {
+            if (!File.Exists(_settingsPath))
+                return new AppSettings();
+            
+            var json = await File.ReadAllTextAsync(_settingsPath);
+            return JsonSerializer.Deserialize<AppSettings>(json, JsonOptions) ?? new AppSettings();
+        }
+        catch
+        {
+            // Return defaults on any error
+            return new AppSettings();
+        }
+    }
+    
+    /// <summary>
+    /// Loads settings synchronously.
+    /// </summary>
+    public AppSettings Load()
+    {
+        try
+        {
+            if (!File.Exists(_settingsPath))
+                return new AppSettings();
+            
+            var json = File.ReadAllText(_settingsPath);
+            return JsonSerializer.Deserialize<AppSettings>(json, JsonOptions) ?? new AppSettings();
+        }
+        catch
+        {
+            return new AppSettings();
+        }
+    }
+    
+    /// <summary>
+    /// Saves settings to disk.
+    /// </summary>
+    public async Task SaveAsync(AppSettings settings)
+    {
+        var directory = Path.GetDirectoryName(_settingsPath);
+        if (!string.IsNullOrEmpty(directory) && !Directory.Exists(directory))
+        {
+            Directory.CreateDirectory(directory);
+        }
+        
+        // Don't persist episode-specific context
+        var settingsToSave = new AppSettings
+        {
+            Model = settings.Model,
+            OutputDirectory = settings.OutputDirectory,
+            TitleCount = settings.TitleCount,
+            TitleMaxWords = settings.TitleMaxWords,
+            ShortDescriptionWords = settings.ShortDescriptionWords,
+            MediumDescriptionWords = settings.MediumDescriptionWords,
+            LongDescriptionWords = settings.LongDescriptionWords,
+            MinChapters = settings.MinChapters,
+            MaxChapters = settings.MaxChapters,
+            ChaptersPer30Min = settings.ChaptersPer30Min,
+            ChapterTitleMaxWords = settings.ChapterTitleMaxWords,
+            PodcastName = settings.PodcastName,
+            HostNames = settings.HostNames,
+            DefaultSegmentDurationMs = settings.DefaultSegmentDurationMs,
+            PromptForContextOnLoad = settings.PromptForContextOnLoad
+            // EpisodeContext is intentionally not saved
+        };
+        
+        var json = JsonSerializer.Serialize(settingsToSave, JsonOptions);
+        await File.WriteAllTextAsync(_settingsPath, json);
+    }
+    
+    /// <summary>
+    /// Saves settings synchronously.
+    /// </summary>
+    public void Save(AppSettings settings)
+    {
+        var directory = Path.GetDirectoryName(_settingsPath);
+        if (!string.IsNullOrEmpty(directory) && !Directory.Exists(directory))
+        {
+            Directory.CreateDirectory(directory);
+        }
+        
+        var settingsToSave = new AppSettings
+        {
+            Model = settings.Model,
+            OutputDirectory = settings.OutputDirectory,
+            TitleCount = settings.TitleCount,
+            TitleMaxWords = settings.TitleMaxWords,
+            ShortDescriptionWords = settings.ShortDescriptionWords,
+            MediumDescriptionWords = settings.MediumDescriptionWords,
+            LongDescriptionWords = settings.LongDescriptionWords,
+            MinChapters = settings.MinChapters,
+            MaxChapters = settings.MaxChapters,
+            ChaptersPer30Min = settings.ChaptersPer30Min,
+            ChapterTitleMaxWords = settings.ChapterTitleMaxWords,
+            PodcastName = settings.PodcastName,
+            HostNames = settings.HostNames,
+            DefaultSegmentDurationMs = settings.DefaultSegmentDurationMs,
+            PromptForContextOnLoad = settings.PromptForContextOnLoad
+        };
+        
+        var json = JsonSerializer.Serialize(settingsToSave, JsonOptions);
+        File.WriteAllText(_settingsPath, json);
+    }
+}

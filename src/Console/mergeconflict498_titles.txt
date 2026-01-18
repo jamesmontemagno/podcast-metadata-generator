@@ -1,0 +1,5 @@
+Mac Notarization Demystified: Hardened Runtime, Signing, Sparkle
+Shipping macOS Apps: CI/CD, GitHub Actions, Sparkle Updates
+.NET 10 Upgrade Path: Trimming, Reflection, SQLite‑NET
+Xcode Cloud Meets GitHub: Streamlined Mac Release Management
+Sandboxing vs Hardened Runtime: Shipping Secure macOS Apps

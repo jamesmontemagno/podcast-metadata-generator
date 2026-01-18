@@ -31,12 +31,17 @@ jobs:
           echo "Releasing version: $VERSION"
 
       - name: Restore dependencies
-        run: dotnet restore
+        run: dotnet restore PodcastMetadataGenerator.sln
 
-      - name: Create NuGet package
+      - name: Build Solution
+        run: dotnet build PodcastMetadataGenerator.sln --configuration Release --no-restore
+
+      - name: Create NuGet package (Console tool)
         run: |
-          dotnet pack --configuration Release \
+          dotnet pack src/Console/PodcastMetadataGenerator.Console.csproj \
+            --configuration Release \
             --output ./artifacts \
+            --no-build \
             -p:Version=${{ steps.version.outputs.VERSION }}
 
       - name: Push to NuGet.org

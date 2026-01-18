@@ -23,13 +23,13 @@ jobs:
           dotnet-version: "10.0.x"
 
       - name: Restore dependencies
-        run: dotnet restore
+        run: dotnet restore PodcastMetadataGenerator.sln
 
-      - name: Build
-        run: dotnet build --no-restore --configuration Release
+      - name: Build Solution
+        run: dotnet build PodcastMetadataGenerator.sln --no-restore --configuration Release
 
       - name: Test
-        run: dotnet test --no-build --configuration Release --verbosity normal
+        run: dotnet test PodcastMetadataGenerator.sln --no-build --configuration Release --verbosity normal
         continue-on-error: true # No tests yet
 
   pack:
@@ -44,8 +44,8 @@ jobs:
         with:
           dotnet-version: "10.0.x"
 
-      - name: Create NuGet package
-        run: dotnet pack --configuration Release --output ./artifacts
+      - name: Create NuGet package (Console tool)
+        run: dotnet pack src/Console/PodcastMetadataGenerator.Console.csproj --configuration Release --output ./artifacts
 
       - name: Upload package artifact
         uses: actions/upload-artifact@v4

@@ -1,6 +1,6 @@
 using System.Diagnostics;
 
-namespace PodcastMetadataGenerator.Models;
+namespace PodcastMetadataGenerator.Core.Models;
 
 /// <summary>
 /// Available AI models for generation from GitHub Copilot CLI.

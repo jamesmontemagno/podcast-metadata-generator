@@ -1,9 +1,9 @@
 using System.Text.RegularExpressions;
 using GitHub.Copilot.SDK;
-using PodcastMetadataGenerator.Models;
-using PodcastMetadataGenerator.Prompts;
+using PodcastMetadataGenerator.Core.Models;
+using PodcastMetadataGenerator.Core.Prompts;
 
-namespace PodcastMetadataGenerator.Services;
+namespace PodcastMetadataGenerator.Core.Services;
 
 /// <summary>
 /// Generates podcast metadata using the GitHub Copilot SDK.

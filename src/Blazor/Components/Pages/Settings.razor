@@ -1,0 +1,192 @@
+@page "/settings"
+@rendermode @(new InteractiveServerRenderMode(prerender: false))
+@inject AppSettings AppSettings
+@inject SettingsService SettingsService
+
+<PageTitle>Settings</PageTitle>
+
+<h1>⚙️ Settings</h1>
+
+@if (_isLoading)
+{
+    <div class="loading-overlay-card">
+        <div class="card">
+            <div class="card-body text-center py-5">
+                <div class="loading-spinner mb-3">
+                    <div class="spinner-ring"></div>
+                    <i class="bi bi-gear loading-icon spin"></i>
+                </div>
+                <h5 class="loading-text">Loading Settings</h5>
+                <p class="text-muted mb-0">Fetching available AI models...</p>
+            </div>
+        </div>
+    </div>
+}
+else
+{
+
+@if (_showSaved)
+{
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        Settings saved successfully!
+        <button type="button" class="btn-close" @onclick="() => _showSaved = false"></button>
+    </div>
+}
+
+<div class="row">
+    <div class="col-md-6">
+        <!-- AI Settings -->
+        <div class="card mb-3">
+            <div class="card-header">
+                <h5 class="mb-0">🤖 AI Settings</h5>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <label class="form-label">Model</label>
+                    <select class="form-select" @bind="AppSettings.Model">
+                        @foreach (var model in _models)
+                        {
+                            <option value="@model">@model</option>
+                        }
+                    </select>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Title Settings -->
+        <div class="card mb-3">
+            <div class="card-header">
+                <h5 class="mb-0">📝 Title Settings</h5>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <label class="form-label">Number of Titles</label>
+                    <input type="number" class="form-control" @bind="AppSettings.TitleCount" min="1" max="20" />
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Max Words per Title</label>
+                    <input type="number" class="form-control" @bind="AppSettings.TitleMaxWords" min="3" max="25" />
+                </div>
+            </div>
+        </div>
+        
+        <!-- Description Settings -->
+        <div class="card mb-3">
+            <div class="card-header">
+                <h5 class="mb-0">📄 Description Settings</h5>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <label class="form-label">Short Description Words</label>
+                    <input type="number" class="form-control" @bind="AppSettings.ShortDescriptionWords" min="20" max="100" />
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Medium Description Words</label>
+                    <input type="number" class="form-control" @bind="AppSettings.MediumDescriptionWords" min="100" max="300" />
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Long Description Words</label>
+                    <input type="number" class="form-control" @bind="AppSettings.LongDescriptionWords" min="200" max="500" />
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6">
+        <!-- Chapter Settings -->
+        <div class="card mb-3">
+            <div class="card-header">
+                <h5 class="mb-0">📑 Chapter Settings</h5>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <label class="form-label">Minimum Chapters</label>
+                    <input type="number" class="form-control" @bind="AppSettings.MinChapters" min="1" max="10" />
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Maximum Chapters</label>
+                    <input type="number" class="form-control" @bind="AppSettings.MaxChapters" min="5" max="30" />
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Chapters per 30 Minutes</label>
+                    <input type="number" class="form-control" @bind="AppSettings.ChaptersPer30Min" min="2" max="10" />
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Chapter Title Max Words</label>
+                    <input type="number" class="form-control" @bind="AppSettings.ChapterTitleMaxWords" min="3" max="15" />
+                </div>
+            </div>
+        </div>
+        
+        <!-- Podcast Info -->
+        <div class="card mb-3">
+            <div class="card-header">
+                <h5 class="mb-0">🎙️ Podcast Info</h5>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <label class="form-label">Podcast Name</label>
+                    <input type="text" class="form-control" @bind="AppSettings.PodcastName" 
+                        placeholder="e.g., Merge Conflict" />
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Host Name(s)</label>
+                    <input type="text" class="form-control" @bind="AppSettings.HostNames" 
+                        placeholder="e.g., James Montemagno, Frank Krueger" />
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="d-flex gap-2">
+    <button class="btn btn-primary" @onclick="SaveSettings">
+        💾 Save Settings
+    </button>
+    <button class="btn btn-outline-secondary" @onclick="ResetToDefaults">
+        🔄 Reset to Defaults
+    </button>
+</div>
+
+} @* End of else block *@
+
+@code {
+    private string[] _models = [];
+    private bool _showSaved;
+    private bool _isLoading = true;
+    
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            _models = await AvailableModels.GetModelsFromCliAsync();
+            _isLoading = false;
+            await InvokeAsync(StateHasChanged);
+        }
+    }
+    
+    private async Task SaveSettings()
+    {
+        await SettingsService.SaveAsync(AppSettings);
+        _showSaved = true;
+        await Task.Delay(3000);
+        _showSaved = false;
+    }
+    
+    private void ResetToDefaults()
+    {
+        var defaults = new AppSettings();
+        
+        AppSettings.Model = defaults.Model;
+        AppSettings.TitleCount = defaults.TitleCount;
+        AppSettings.TitleMaxWords = defaults.TitleMaxWords;
+        AppSettings.ShortDescriptionWords = defaults.ShortDescriptionWords;
+        AppSettings.MediumDescriptionWords = defaults.MediumDescriptionWords;
+        AppSettings.LongDescriptionWords = defaults.LongDescriptionWords;
+        AppSettings.MinChapters = defaults.MinChapters;
+        AppSettings.MaxChapters = defaults.MaxChapters;
+        AppSettings.ChaptersPer30Min = defaults.ChaptersPer30Min;
+        AppSettings.ChapterTitleMaxWords = defaults.ChapterTitleMaxWords;
+        // Keep podcast name and host names
+    }
+}

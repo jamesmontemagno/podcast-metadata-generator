@@ -1,6 +1,6 @@
 using System.Text.Json.Serialization;
 
-namespace PodcastMetadataGenerator.Models;
+namespace PodcastMetadataGenerator.Core.Models;
 
 /// <summary>
 /// JSON manifest containing all generated metadata.
