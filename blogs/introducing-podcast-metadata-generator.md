@@ -107,6 +107,8 @@ For my Podcast Metadata Generator, this architecture means anyone with a Copilot
 
 Here's where it gets really cool. The [GitHub Copilot SDK](https://github.com/github/copilot-sdk) is a NuGet package that lets your .NET applications communicate with the Copilot CLI programmatically. Instead of parsing terminal output or making direct API calls (and managing your own API keys), you get a clean, typed C# interface.
 
+> **Note:** The Copilot SDK is currently in **technical preview**. Check out the [GitHub repo](https://github.com/github/copilot-sdk) for the latest updates and to provide feedback.
+
 The SDK provides:
 
 - **CopilotClient** — Connects to the local Copilot CLI process
