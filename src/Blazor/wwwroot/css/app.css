@@ -996,3 +996,21 @@ hr {
     font-weight: 500;
     color: #6366f1;
 }
+
+/* ============================================
+   Generate More Card Styles
+   ============================================ */
+
+.generate-more-card {
+    animation: slideIn 0.3s ease-out;
+    border: 2px solid #0dcaf0;
+}
+
+.generate-more-btn {
+    transition: all 0.2s ease;
+}
+
+.generate-more-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+}

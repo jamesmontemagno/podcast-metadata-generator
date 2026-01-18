@@ -495,6 +495,66 @@ else if (_result == null || _isGenerating)
         </div>
     }
     
+    <!-- Generate More Suggestion -->
+    @if (!_isGenerating && HasMoreToGenerate)
+    {
+        <div class="card mb-3 generate-more-card">
+            <div class="card-header bg-info text-white">
+                <h5 class="mb-0"><i class="bi bi-lightbulb me-2"></i>Want to generate more?</h5>
+            </div>
+            <div class="card-body">
+                <p class="mb-3">You haven't generated all available metadata. Would you like to add any of these?</p>
+                
+                <div class="row g-2 mb-3">
+                    @if (!_result!.Titles.Any())
+                    {
+                        <div class="col-auto">
+                            <button class="btn btn-outline-primary generate-more-btn" @onclick="() => GenerateMore(titles: true)">
+                                <i class="bi bi-card-heading me-1"></i> Generate Titles
+                            </button>
+                        </div>
+                    }
+                    @if (!_result!.Descriptions.ContainsKey(DescriptionLength.Short))
+                    {
+                        <div class="col-auto">
+                            <button class="btn btn-outline-primary generate-more-btn" @onclick="() => GenerateMore(shortDesc: true)">
+                                <i class="bi bi-text-paragraph me-1"></i> Short Description
+                            </button>
+                        </div>
+                    }
+                    @if (!_result!.Descriptions.ContainsKey(DescriptionLength.Medium))
+                    {
+                        <div class="col-auto">
+                            <button class="btn btn-outline-primary generate-more-btn" @onclick="() => GenerateMore(mediumDesc: true)">
+                                <i class="bi bi-file-text me-1"></i> Medium Description
+                            </button>
+                        </div>
+                    }
+                    @if (!_result!.Descriptions.ContainsKey(DescriptionLength.Long))
+                    {
+                        <div class="col-auto">
+                            <button class="btn btn-outline-primary generate-more-btn" @onclick="() => GenerateMore(longDesc: true)">
+                                <i class="bi bi-file-richtext me-1"></i> Long Description
+                            </button>
+                        </div>
+                    }
+                    @if (_transcript!.HasTimestamps && !_result!.Chapters.Any())
+                    {
+                        <div class="col-auto">
+                            <button class="btn btn-outline-primary generate-more-btn" @onclick="() => GenerateMore(chapters: true)">
+                                <i class="bi bi-list-ol me-1"></i> YouTube Chapters
+                            </button>
+                        </div>
+                    }
+                </div>
+                
+                <button class="btn btn-primary" @onclick="GenerateAllRemaining">
+                    <i class="bi bi-stars me-2"></i>Generate All Remaining
+                </button>
+            </div>
+        </div>
+    }
+    
     <!-- Copy notification -->
     @if (_showCopyNotification)
     {
@@ -544,6 +604,14 @@ else if (_result == null || _isGenerating)
     private bool _showExportPanel;
     
     private bool HasAnyOptionSelected => _generateTitles || _generateShortDesc || _generateMediumDesc || _generateLongDesc || (_transcript?.HasTimestamps == true && _generateChapters);
+    
+    private bool HasMoreToGenerate => _result != null && _transcript != null && (
+        !_result.Titles.Any() ||
+        !_result.Descriptions.ContainsKey(DescriptionLength.Short) ||
+        !_result.Descriptions.ContainsKey(DescriptionLength.Medium) ||
+        !_result.Descriptions.ContainsKey(DescriptionLength.Long) ||
+        (_transcript.HasTimestamps && !_result.Chapters.Any())
+    );
     
     private record GenerationStep(string Name, string Icon, bool IsComplete, bool IsActive);
     
@@ -961,5 +1029,206 @@ else if (_result == null || _isGenerating)
             : "podcast-metadata.txt";
         
         await JS.InvokeVoidAsync("downloadTextFile", fileName, exportText);
+    }
+    
+    private async Task GenerateMore(bool titles = false, bool shortDesc = false, bool mediumDesc = false, bool longDesc = false, bool chapters = false)
+    {
+        // Set the generation options based on what was requested
+        _generateTitles = titles;
+        _generateShortDesc = shortDesc;
+        _generateMediumDesc = mediumDesc;
+        _generateLongDesc = longDesc;
+        _generateChapters = chapters;
+        
+        // Keep existing results and generate more
+        await StartAdditionalGeneration();
+    }
+    
+    private async Task GenerateAllRemaining()
+    {
+        // Set flags for all items that haven't been generated yet
+        _generateTitles = _result != null && !_result.Titles.Any();
+        _generateShortDesc = _result != null && !_result.Descriptions.ContainsKey(DescriptionLength.Short);
+        _generateMediumDesc = _result != null && !_result.Descriptions.ContainsKey(DescriptionLength.Medium);
+        _generateLongDesc = _result != null && !_result.Descriptions.ContainsKey(DescriptionLength.Long);
+        _generateChapters = _transcript?.HasTimestamps == true && _result != null && !_result.Chapters.Any();
+        
+        await StartAdditionalGeneration();
+    }
+    
+    private async Task StartAdditionalGeneration()
+    {
+        if (_transcript == null || _result == null) return;
+        
+        _isGenerating = true;
+        _errorMessage = null;
+        _wasCancelled = false;
+        _currentStepIndex = 0;
+        _showExportPanel = false;
+        _cancellationTokenSource = new CancellationTokenSource();
+        
+        // Build step list based on selected options
+        _steps = [new GenerationStep("Initialize", "🚀", false, false)];
+        
+        if (_generateTitles)
+            _steps.Add(new GenerationStep("Titles", "📝", false, false));
+        if (_generateShortDesc)
+            _steps.Add(new GenerationStep("Short", "📄", false, false));
+        if (_generateMediumDesc)
+            _steps.Add(new GenerationStep("Medium", "📃", false, false));
+        if (_generateLongDesc)
+            _steps.Add(new GenerationStep("Long", "📜", false, false));
+        if (_transcript.HasTimestamps && _generateChapters)
+            _steps.Add(new GenerationStep("Chapters", "📑", false, false));
+        
+        _totalSteps = _steps.Count;
+        
+        // Update active tab for new content
+        if (_generateTitles) _activeResultTab = "titles";
+        else if (_generateShortDesc || _generateMediumDesc || _generateLongDesc) _activeResultTab = "descriptions";
+        else if (_generateChapters) _activeResultTab = "chapters";
+        
+        try
+        {
+            var token = _cancellationTokenSource.Token;
+            
+            Settings.EpisodeContext = _episodeContext;
+            
+            await using var generator = new MetadataGenerator(Settings);
+            
+            var stepIndex = 0;
+            
+            // Step 0: Initialize
+            UpdateStep(stepIndex, "Initializing AI...");
+            await generator.InitializeAsync();
+            token.ThrowIfCancellationRequested();
+            CompleteStep(stepIndex);
+            stepIndex++;
+            
+            // Generate titles
+            if (_generateTitles)
+            {
+                UpdateStep(stepIndex, "Generating catchy episode titles...");
+                AppendToStream("\n═══════════════════════════════════════\n");
+                AppendToStream("📝 GENERATING TITLES\n");
+                AppendToStream("═══════════════════════════════════════\n\n");
+                
+                _result.Titles = await generator.GenerateTitlesAsync(
+                    _transcript,
+                    chunk => AppendToStream(chunk),
+                    token);
+                
+                _exportTitle = true;
+                token.ThrowIfCancellationRequested();
+                CompleteStep(stepIndex);
+                stepIndex++;
+                await InvokeAsync(StateHasChanged);
+            }
+            
+            // Generate short description
+            if (_generateShortDesc)
+            {
+                UpdateStep(stepIndex, "Crafting short description...");
+                AppendToStream("\n\n═══════════════════════════════════════\n");
+                AppendToStream("📄 GENERATING SHORT DESCRIPTION\n");
+                AppendToStream("═══════════════════════════════════════\n\n");
+                
+                var desc = await generator.GenerateDescriptionAsync(
+                    _transcript,
+                    DescriptionLength.Short,
+                    _result.Titles.FirstOrDefault(),
+                    chunk => AppendToStream(chunk),
+                    token);
+                
+                _result.Descriptions[DescriptionLength.Short] = desc;
+                _exportShortDesc = true;
+                token.ThrowIfCancellationRequested();
+                CompleteStep(stepIndex);
+                stepIndex++;
+                await InvokeAsync(StateHasChanged);
+            }
+            
+            // Generate medium description
+            if (_generateMediumDesc)
+            {
+                UpdateStep(stepIndex, "Crafting medium description...");
+                AppendToStream("\n\n═══════════════════════════════════════\n");
+                AppendToStream("📃 GENERATING MEDIUM DESCRIPTION\n");
+                AppendToStream("═══════════════════════════════════════\n\n");
+                
+                var desc = await generator.GenerateDescriptionAsync(
+                    _transcript,
+                    DescriptionLength.Medium,
+                    _result.Titles.FirstOrDefault(),
+                    chunk => AppendToStream(chunk),
+                    token);
+                
+                _result.Descriptions[DescriptionLength.Medium] = desc;
+                _exportMediumDesc = true;
+                token.ThrowIfCancellationRequested();
+                CompleteStep(stepIndex);
+                stepIndex++;
+                await InvokeAsync(StateHasChanged);
+            }
+            
+            // Generate long description
+            if (_generateLongDesc)
+            {
+                UpdateStep(stepIndex, "Crafting long description...");
+                AppendToStream("\n\n═══════════════════════════════════════\n");
+                AppendToStream("📜 GENERATING LONG DESCRIPTION\n");
+                AppendToStream("═══════════════════════════════════════\n\n");
+                
+                var desc = await generator.GenerateDescriptionAsync(
+                    _transcript,
+                    DescriptionLength.Long,
+                    _result.Titles.FirstOrDefault(),
+                    chunk => AppendToStream(chunk),
+                    token);
+                
+                _result.Descriptions[DescriptionLength.Long] = desc;
+                _exportLongDesc = true;
+                token.ThrowIfCancellationRequested();
+                CompleteStep(stepIndex);
+                stepIndex++;
+                await InvokeAsync(StateHasChanged);
+            }
+            
+            // Generate chapters
+            if (_transcript.HasTimestamps && _generateChapters)
+            {
+                UpdateStep(stepIndex, "Creating chapter markers...");
+                AppendToStream("\n\n═══════════════════════════════════════\n");
+                AppendToStream("📑 GENERATING CHAPTERS\n");
+                AppendToStream("═══════════════════════════════════════\n\n");
+                
+                _result.Chapters = await generator.GenerateChaptersAsync(
+                    _transcript,
+                    chunk => AppendToStream(chunk),
+                    token);
+                    
+                _exportChapters = true;
+                CompleteStep(stepIndex);
+                await InvokeAsync(StateHasChanged);
+            }
+            
+            AppendToStream("\n\n✅ Additional generation complete!");
+        }
+        catch (OperationCanceledException)
+        {
+            _wasCancelled = true;
+            AppendToStream("\n\n⚠️ Generation cancelled by user.");
+        }
+        catch (Exception ex)
+        {
+            _errorMessage = $"Generation failed: {ex.Message}";
+        }
+        finally
+        {
+            _isGenerating = false;
+            _cancellationTokenSource?.Dispose();
+            _cancellationTokenSource = null;
+            await InvokeAsync(StateHasChanged);
+        }
     }
 }
