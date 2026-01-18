@@ -1,4 +1,4 @@
-namespace PodcastMetadataGenerator.Models;
+namespace PodcastMetadataGenerator.Core.Models;
 
 /// <summary>
 /// Represents a single segment of a transcript with timestamp, speaker, and text.

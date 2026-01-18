@@ -64,29 +64,52 @@ dotnet tool install -g PodcastMetadataGenerator
 ```bash
 git clone https://github.com/jamesmontemagno/podcast-metadata-generator.git
 cd podcast-metadata-generator
-dotnet build
+dotnet build PodcastMetadataGenerator.sln
 ```
 
 ## 📖 Usage
 
-### Interactive Mode
+### Console App - Interactive Mode
 
 ```bash
 # If installed as a tool:
-podcast-metadata
+podcast-metadata-generator
 
 # Or from source:
+cd src/Console
 dotnet run
 ```
 
-### With a Transcript File
+### Console App - With a Transcript File
 
 ```bash
-podcast-metadata /path/to/transcript.txt
+podcast-metadata-generator /path/to/transcript.txt
 
 # Or from source:
 dotnet run -- /path/to/transcript.txt
 ```
+
+## 🌐 Blazor Demo (Local Only)
+
+A web UI demo is included for local development and presentations.
+
+> ⚠️ **Local Use Only**: The Blazor app uses your local Copilot authentication and is not designed for deployment or multi-user access.
+
+### Running the Blazor Demo
+
+```bash
+# From repository root
+cd src/Blazor
+dotnet run
+```
+
+Then open https://localhost:5001 in your browser.
+
+### Features
+- Drag-and-drop file upload
+- Real-time streaming AI output
+- Tabbed results view
+- Settings persistence via localStorage
 
 ## 🎯 Supported Transcript Formats
 
@@ -158,24 +181,37 @@ Settings are automatically saved to `~/.config/podcast-metadata-generator/settin
 
 ```
 podcast-metadata-generator/
-├── Models/
-│   ├── AppSettings.cs       # Configuration and generation settings
-│   ├── GenerationResult.cs  # Results container
-│   ├── Manifest.cs          # JSON manifest structure
-│   └── Transcript.cs        # Transcript and segment models
-├── Services/
-│   ├── CopilotAuthService.cs   # CLI authentication checks
-│   ├── MetadataGenerator.cs    # AI generation via Copilot SDK
-│   ├── OutputService.cs        # File output handling
-│   ├── SettingsService.cs      # Settings persistence
-│   ├── SrtConverter.cs         # SRT format conversion
-│   └── TranscriptParser.cs     # Multi-format transcript parsing
-├── Prompts/
-│   └── PromptTemplates.cs      # AI prompt templates
-├── UI/
-│   ├── AppWorkflow.cs          # Main application workflow
-│   └── ConsoleUI.cs            # Spectre.Console UI helpers
-└── Program.cs                  # Entry point
+├── PodcastMetadataGenerator.sln     # Solution file
+├── src/
+│   ├── Core/                        # Shared class library
+│   │   ├── Models/
+│   │   │   ├── AppSettings.cs       # Configuration and generation settings
+│   │   │   ├── GenerationResult.cs  # Results container
+│   │   │   ├── Manifest.cs          # JSON manifest structure
+│   │   │   ├── Transcript.cs        # Transcript model
+│   │   │   └── TranscriptSegment.cs # Segment model
+│   │   ├── Services/
+│   │   │   ├── CopilotAuthService.cs   # CLI authentication checks
+│   │   │   ├── MetadataGenerator.cs    # AI generation via Copilot SDK
+│   │   │   ├── OutputService.cs        # File output handling
+│   │   │   ├── SettingsService.cs      # Settings persistence
+│   │   │   ├── SrtConverter.cs         # SRT format conversion
+│   │   │   └── TranscriptParser.cs     # Multi-format transcript parsing
+│   │   └── Prompts/
+│   │       └── PromptTemplates.cs      # AI prompt templates
+│   ├── Console/                     # Console application
+│   │   ├── UI/
+│   │   │   ├── AppWorkflow.cs          # Main application workflow
+│   │   │   └── ConsoleUI.cs            # Spectre.Console UI helpers
+│   │   └── Program.cs                  # Console entry point
+│   └── Blazor/                      # Blazor Server demo (local only)
+│       ├── Components/
+│       │   ├── Layout/                 # MainLayout, NavMenu
+│       │   └── Pages/                  # Home, Generate, Settings
+│       ├── wwwroot/
+│       │   └── css/app.css
+│       └── Program.cs                  # Blazor entry point
+└── data/                            # Sample transcripts
 ```
 
 ## 🤝 Contributing

@@ -1,0 +1,40 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <RootNamespace>PodcastMetadataGenerator.Console</RootNamespace>
+    <AssemblyName>podcast-metadata-generator</AssemblyName>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    
+    <!-- NuGet Package Configuration -->
+    <PackAsTool>true</PackAsTool>
+    <ToolCommandName>podcast-metadata-generator</ToolCommandName>
+    <PackageId>PodcastMetadataGenerator</PackageId>
+    <PackageVersion>1.0.0</PackageVersion>
+    <Authors>James Montemagno</Authors>
+    <Description>Generate podcast metadata (titles, descriptions, chapters, SRT) from transcripts using GitHub Copilot AI</Description>
+    <PackageTags>podcast;metadata;ai;copilot;transcripts;chapters;srt</PackageTags>
+    <PackageProjectUrl>https://github.com/jamesmontemagno/podcast-metadata-generator</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/jamesmontemagno/podcast-metadata-generator</RepositoryUrl>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    
+    <!-- Enable reflection-based JSON serialization -->
+    <JsonSerializerIsReflectionEnabledByDefault>true</JsonSerializerIsReflectionEnabledByDefault>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Core\PodcastMetadataGenerator.Core.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Spectre.Console" Version="0.54.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="..\..\README.md" Pack="true" PackagePath="\"/>
+  </ItemGroup>
+
+</Project>

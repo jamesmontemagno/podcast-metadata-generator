@@ -1,6 +1,6 @@
-using PodcastMetadataGenerator.Models;
+using PodcastMetadataGenerator.Core.Models;
 
-namespace PodcastMetadataGenerator.Prompts;
+namespace PodcastMetadataGenerator.Core.Prompts;
 
 /// <summary>
 /// Contains all prompt templates for AI generation.

@@ -1,8 +1,8 @@
 using Spectre.Console;
-using PodcastMetadataGenerator.Models;
-using PodcastMetadataGenerator.Services;
+using PodcastMetadataGenerator.Core.Models;
+using PodcastMetadataGenerator.Core.Services;
 
-namespace PodcastMetadataGenerator.UI;
+namespace PodcastMetadataGenerator.Console.UI;
 
 /// <summary>
 /// Main application workflow using Spectre.Console.
@@ -25,18 +25,27 @@ public class AppWorkflow
         _settingsService = new SettingsService();
         _parser = new TranscriptParser(_settings);
         _srtConverter = new SrtConverter();
-        _outputService = new OutputService();
+        _outputService = new OutputService(_srtConverter);
     }
     
     /// <summary>
     /// Runs the application with optional CLI arguments.
     /// </summary>
-    public async Task RunAsync(string[] args)
+    public async Task RunAsync(string[] args, CopilotAuthService.CopilotStatus? copilotStatus = null)
     {
         // Load saved settings
         await LoadSettingsAsync();
         
-        ConsoleUI.ShowHeader();
+        // Show header with ASCII art and Copilot status
+        ConsoleUI.ShowHeader(copilotStatus);
+        
+        // Check if Copilot is not ready
+        if (copilotStatus != null && (!copilotStatus.IsInstalled || (!copilotStatus.IsTokenSet && !copilotStatus.IsAuthenticated)))
+        {
+            AnsiConsole.MarkupLine("[yellow]Press any key to exit...[/]");
+            System.Console.ReadKey(true);
+            return;
+        }
         
         // If transcript path provided as argument, load it directly
         if (args.Length > 0 && File.Exists(args[0]))
@@ -695,7 +704,7 @@ public class AppWorkflow
         
         try
         {
-            var saveResult = await AnsiConsole.Status()
+            var savedFiles = await AnsiConsole.Status()
                 .Spinner(Spinner.Known.Dots)
                 .SpinnerStyle(Style.Parse("blue"))
                 .StartAsync("Saving results...", async ctx =>
@@ -707,30 +716,19 @@ public class AppWorkflow
                         _settings);
                 });
             
-            if (saveResult.Errors.Count > 0)
+            ConsoleUI.ShowSuccess($"Saved {savedFiles.Count} files to: {outputDir}");
+            
+            var table = new Table()
+                .RoundedBorder()
+                .BorderColor(Color.Green)
+                .AddColumn("Saved Files");
+            
+            foreach (var file in savedFiles)
             {
-                ConsoleUI.ShowWarning($"Saved with {saveResult.Errors.Count} errors");
-                foreach (var error in saveResult.Errors)
-                {
-                    AnsiConsole.MarkupLine($"  [red]• {Markup.Escape(error)}[/]");
-                }
+                table.AddRow(Markup.Escape(Path.GetFileName(file)));
             }
-            else
-            {
-                ConsoleUI.ShowSuccess($"Saved {saveResult.SavedFiles.Count} files to: {outputDir}");
-                
-                var table = new Table()
-                    .RoundedBorder()
-                    .BorderColor(Color.Green)
-                    .AddColumn("Saved Files");
-                
-                foreach (var file in saveResult.SavedFiles)
-                {
-                    table.AddRow(Markup.Escape(Path.GetFileName(file)));
-                }
-                
-                AnsiConsole.Write(table);
-            }
+            
+            AnsiConsole.Write(table);
         }
         catch (Exception ex)
         {
@@ -854,7 +852,7 @@ public class AppWorkflow
                     
                 case "💾 Save Settings":
                     await SaveSettingsAsync();
-                    ConsoleUI.ShowSuccess($"Settings saved to: {SettingsService.GetSettingsPath()}");
+                    ConsoleUI.ShowSuccess($"Settings saved to: {SettingsService.GetDefaultSettingsPath()}");
                     break;
                     
                 case "🔄 Reset to Defaults":

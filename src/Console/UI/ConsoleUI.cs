@@ -1,7 +1,8 @@
 using Spectre.Console;
-using PodcastMetadataGenerator.Models;
+using PodcastMetadataGenerator.Core.Models;
+using PodcastMetadataGenerator.Core.Services;
 
-namespace PodcastMetadataGenerator.UI;
+namespace PodcastMetadataGenerator.Console.UI;
 
 /// <summary>
 /// Helper methods for Spectre.Console UI patterns.
@@ -9,11 +10,26 @@ namespace PodcastMetadataGenerator.UI;
 public static class ConsoleUI
 {
     /// <summary>
-    /// Shows the application header/banner.
+    /// Shows the application header/banner with ASCII art.
     /// </summary>
-    public static void ShowHeader()
+    public static void ShowHeader(CopilotAuthService.CopilotStatus? copilotStatus = null)
     {
         AnsiConsole.Clear();
+        
+        // ASCII art logo
+        var asciiArt = @"
+[blue]    ██████╗  ██████╗ ██████╗  ██████╗ █████╗ ███████╗████████╗[/]
+[blue]    ██╔══██╗██╔═══██╗██╔══██╗██╔════╝██╔══██╗██╔════╝╚══██╔══╝[/]
+[cyan]    ██████╔╝██║   ██║██║  ██║██║     ███████║███████╗   ██║   [/]
+[cyan]    ██╔═══╝ ██║   ██║██║  ██║██║     ██╔══██║╚════██║   ██║   [/]
+[magenta]    ██║     ╚██████╔╝██████╔╝╚██████╗██║  ██║███████║   ██║   [/]
+[magenta]    ╚═╝      ╚═════╝ ╚═════╝  ╚═════╝╚═╝  ╚═╝╚══════╝   ╚═╝   [/]
+[grey]           ╔╦╗┌─┐┌┬┐┌─┐┌┬┐┌─┐┌┬┐┌─┐  ╔═╗┌─┐┌┐┌[/]
+[grey]           ║║║├┤  │ ├─┤ ││├─┤ │ ├─┤  ║ ╦├┤ │││[/]
+[grey]           ╩ ╩└─┘ ┴ ┴ ┴─┴┘┴ ┴ ┴ ┴ ┴  ╚═╝└─┘┘└┘[/]
+";
+        AnsiConsole.Markup(asciiArt);
+        AnsiConsole.WriteLine();
         
         var rule = new Rule("[bold blue]🎙️ Podcast Metadata Generator[/]")
         {
@@ -22,6 +38,73 @@ public static class ConsoleUI
         };
         AnsiConsole.Write(rule);
         AnsiConsole.WriteLine();
+        
+        // Show Copilot status if provided
+        if (copilotStatus != null)
+        {
+            ShowCopilotStatus(copilotStatus);
+        }
+    }
+    
+    /// <summary>
+    /// Shows Copilot CLI status.
+    /// </summary>
+    public static void ShowCopilotStatus(CopilotAuthService.CopilotStatus status)
+    {
+        AnsiConsole.MarkupLine("[bold]Copilot CLI Status[/]");
+        AnsiConsole.WriteLine();
+        
+        var table = new Table()
+            .Border(TableBorder.Rounded)
+            .AddColumn("Check")
+            .AddColumn("Status");
+        
+        table.AddRow(
+            "Copilot CLI Installed",
+            status.IsInstalled ? "[green]✓ Installed[/]" : "[red]✗ Not Installed[/]");
+        
+        table.AddRow(
+            "GH_TOKEN Environment Variable",
+            status.IsTokenSet ? "[green]✓ Set[/]" : "[grey]○ Not Set[/]");
+        
+        table.AddRow(
+            "Authentication Status",
+            status.IsAuthenticated ? "[green]✓ Authenticated[/]" : "[red]✗ Not Authenticated[/]");
+        
+        AnsiConsole.Write(table);
+        AnsiConsole.WriteLine();
+        
+        // Show success message if ready
+        if (status.IsInstalled && (status.IsTokenSet || status.IsAuthenticated))
+        {
+            AnsiConsole.MarkupLine("[green]✓ Copilot CLI is ready to use![/]");
+            AnsiConsole.WriteLine();
+            return;
+        }
+        
+        if (!string.IsNullOrEmpty(status.ErrorMessage))
+        {
+            AnsiConsole.MarkupLine($"[red]Error:[/] {status.ErrorMessage}");
+            AnsiConsole.WriteLine();
+        }
+        
+        if (!status.IsInstalled)
+        {
+            AnsiConsole.MarkupLine("[yellow]To install Copilot CLI:[/]");
+            AnsiConsole.MarkupLine("  [cyan]npm install -g @github/copilot[/]");
+            AnsiConsole.MarkupLine("  [dim]or[/]");
+            AnsiConsole.MarkupLine("  [cyan]brew install gh && gh extension install github/gh-copilot[/]");
+            AnsiConsole.WriteLine();
+        }
+        
+        if (status.IsInstalled && !status.IsAuthenticated && !status.IsTokenSet)
+        {
+            AnsiConsole.MarkupLine("[yellow]To authenticate:[/]");
+            AnsiConsole.MarkupLine("  [cyan]copilot auth login[/]");
+            AnsiConsole.MarkupLine("  [dim]or set the GH_TOKEN environment variable:[/]");
+            AnsiConsole.MarkupLine("  [cyan]export GH_TOKEN=your_github_token[/]");
+            AnsiConsole.WriteLine();
+        }
     }
     
     /// <summary>
@@ -496,6 +579,6 @@ public static class ConsoleUI
     public static void WaitForKey(string message = "Press any key to continue...")
     {
         AnsiConsole.MarkupLine($"[grey]{Markup.Escape(message)}[/]");
-        Console.ReadKey(true);
+        System.Console.ReadKey(true);
     }
 }

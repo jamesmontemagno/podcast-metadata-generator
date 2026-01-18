@@ -1,4 +1,4 @@
-namespace PodcastMetadataGenerator.Models;
+namespace PodcastMetadataGenerator.Core.Models;
 
 /// <summary>
 /// Detected format of the transcript file.

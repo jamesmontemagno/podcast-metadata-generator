@@ -1,7 +1,7 @@
 using System.Text;
-using PodcastMetadataGenerator.Models;
+using PodcastMetadataGenerator.Core.Models;
 
-namespace PodcastMetadataGenerator.Services;
+namespace PodcastMetadataGenerator.Core.Services;
 
 /// <summary>
 /// Converts transcripts to valid SRT format and validates SRT files.

@@ -1,4 +1,4 @@
-namespace PodcastMetadataGenerator.Models;
+namespace PodcastMetadataGenerator.Core.Models;
 
 /// <summary>
 /// Length options for description generation.
