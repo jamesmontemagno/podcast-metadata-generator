@@ -2,6 +2,7 @@
 @rendermode @(new InteractiveServerRenderMode(prerender: false))
 @inject AppSettings AppSettings
 @inject SettingsService SettingsService
+@using GitHub.Copilot.SDK
 
 <PageTitle>Settings</PageTitle>
 
@@ -46,9 +47,17 @@ else
                     <select class="form-select" @bind="AppSettings.Model">
                         @foreach (var model in _models)
                         {
-                            <option value="@model">@model</option>
+                            var displayText = model.Name;
+                            if (model.Billing?.Multiplier > 0)
+                            {
+                                displayText = $"{model.Name} (×{model.Billing.Multiplier:0.##})";
+                            }
+                            <option value="@model.Id">@displayText</option>
                         }
                     </select>
+                    <small class="form-text text-muted">
+                        Multiplier indicates relative cost of the model
+                    </small>
                 </div>
             </div>
         </div>
@@ -151,7 +160,7 @@ else
 } @* End of else block *@
 
 @code {
-    private string[] _models = [];
+    private List<ModelInfo> _models = [];
     private bool _showSaved;
     private bool _isLoading = true;
     
@@ -159,7 +168,7 @@ else
     {
         if (firstRender)
         {
-            _models = await AvailableModels.GetModelsFromCliAsync();
+            _models = await AvailableModels.GetModelsWithMetadataAsync();
             _isLoading = false;
             await InvokeAsync(StateHasChanged);
         }

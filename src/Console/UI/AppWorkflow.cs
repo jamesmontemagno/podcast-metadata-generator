@@ -807,17 +807,24 @@ public class AppWorkflow
             switch (action)
             {
                 case "🤖 Change Model":
-                    var models = await AnsiConsole.Status()
+                    var modelInfos = await AnsiConsole.Status()
                         .Spinner(Spinner.Known.Dots)
                         .SpinnerStyle(Style.Parse("blue"))
-                        .StartAsync("Fetching available models from Copilot CLI...", async ctx =>
+                        .StartAsync("Fetching available models from Copilot SDK...", async ctx =>
                         {
-                            return await AvailableModels.GetModelsFromCliAsync();
+                            return await AvailableModels.GetModelsWithMetadataAsync();
                         });
                     
-                    _settings.Model = ConsoleUI.SelectFromList(
-                        "Select AI Model:",
-                        models);
+                    // Create display mapping
+                    var modelChoices = modelInfos.ToDictionary(
+                        m => FormatModelName(m),
+                        m => m.Id);
+                    
+                    var selectedDisplay = ConsoleUI.SelectFromList(
+                        "Select AI Model (multiplier shows relative cost):",
+                        modelChoices.Keys);
+                    
+                    _settings.Model = modelChoices[selectedDisplay];
                     ConsoleUI.ShowSuccess($"Model set to: {_settings.Model}");
                     break;
                     
@@ -995,6 +1002,16 @@ public class AppWorkflow
             return false;
         }
         return true;
+    }
+    
+    private static string FormatModelName(GitHub.Copilot.SDK.ModelInfo model)
+    {
+        var name = model.Name;
+        if (model.Billing?.Multiplier > 0)
+        {
+            name = $"{model.Name} (×{model.Billing.Multiplier:0.##})";
+        }
+        return name;
     }
     
     private async Task EnsureGeneratorInitializedAsync()

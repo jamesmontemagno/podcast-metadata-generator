@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using GitHub.Copilot.SDK;
 
 namespace PodcastMetadataGenerator.Core.Services;
 
@@ -14,7 +15,10 @@ public class CopilotAuthService
         bool IsInstalled,
         bool IsTokenSet,
         bool IsAuthenticated,
-        string? ErrorMessage);
+        string? ErrorMessage,
+        string? AuthType = null,
+        string? Host = null,
+        string? Login = null);
     
     /// <summary>
     /// Checks if Copilot CLI is ready to use.
@@ -38,14 +42,17 @@ public class CopilotAuthService
                 ErrorMessage: "Copilot CLI is not installed. Install via: npm install -g @github/copilot or brew install copilot");
         }
         
-        // Check authentication status
+        // Check authentication status using SDK
         var authResult = await CheckCopilotAuthAsync();
         
         return new CopilotStatus(
             IsInstalled: true,
             IsTokenSet: isTokenSet,
             IsAuthenticated: authResult.isAuthenticated,
-            ErrorMessage: authResult.error);
+            ErrorMessage: authResult.error,
+            AuthType: authResult.authType,
+            Host: authResult.host,
+            Login: authResult.login);
     }
     
     /// <summary>
@@ -82,46 +89,34 @@ public class CopilotAuthService
         }
     }
     
-    private static async Task<(bool isAuthenticated, string? error)> CheckCopilotAuthAsync()
+    private static async Task<(bool isAuthenticated, string? error, string? authType, string? host, string? login)> CheckCopilotAuthAsync()
     {
-        // If GH_TOKEN is set, assume authenticated
-        if (!string.IsNullOrEmpty(Environment.GetEnvironmentVariable("GH_TOKEN")))
-        {
-            return (true, null);
-        }
-        
+        CopilotClient? client = null;
         try
         {
-            // Try running a minimal copilot command to check auth
-            using var process = new Process();
-            process.StartInfo = new ProcessStartInfo
-            {
-                FileName = "copilot",
-                Arguments = "--help",
-                RedirectStandardOutput = true,
-                RedirectStandardError = true,
-                UseShellExecute = false,
-                CreateNoWindow = true
-            };
+            client = new CopilotClient();
+            await client.StartAsync();
             
-            process.Start();
-            var stderr = await process.StandardError.ReadToEndAsync();
-            await process.WaitForExitAsync();
+            var authResponse = await client.GetAuthStatusAsync();
             
-            // Check for authentication errors in stderr
-            if (stderr.Contains("not authenticated", StringComparison.OrdinalIgnoreCase) ||
-                stderr.Contains("unauthorized", StringComparison.OrdinalIgnoreCase) ||
-                stderr.Contains("login required", StringComparison.OrdinalIgnoreCase))
+            if (!authResponse.IsAuthenticated)
             {
-                return (false, "Not authenticated. Run 'copilot auth login' or set GH_TOKEN environment variable.");
+                var statusMsg = authResponse.StatusMessage ?? "Not authenticated";
+                return (false, $"{statusMsg}. Run 'copilot auth login' or set GH_TOKEN environment variable.", null, null, null);
             }
             
-            // If --help works without auth errors, consider it ready
-            return process.ExitCode == 0 ? (true, null) : (false, "Copilot CLI returned an error.");
+            return (true, null, authResponse.AuthType, authResponse.Host, authResponse.Login);
         }
         catch (Exception ex)
         {
-            return (false, $"Failed to check authentication: {ex.Message}");
+            return (false, $"Failed to check authentication: {ex.Message}", null, null, null);
+        }
+        finally
+        {
+            if (client != null)
+            {
+                await client.DisposeAsync();
+            }
         }
     }
 }

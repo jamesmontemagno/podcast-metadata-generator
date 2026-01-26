@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using GitHub.Copilot.SDK;
 
 namespace PodcastMetadataGenerator.Core.Models;
 
@@ -54,73 +55,64 @@ public static class AvailableModels
     public static string Default => Gpt5;
     
     /// <summary>
-    /// Fetches the list of available models from the Copilot CLI.
-    /// Falls back to the hardcoded list if the CLI is unavailable.
+    /// Fetches the list of available models from the Copilot SDK.
+    /// Falls back to the hardcoded list if the SDK is unavailable.
     /// </summary>
     public static async Task<string[]> GetModelsFromCliAsync()
     {
         try
         {
-            using var process = new Process();
-            process.StartInfo = new ProcessStartInfo
-            {
-                FileName = "copilot",
-                Arguments = "--help",
-                RedirectStandardOutput = true,
-                RedirectStandardError = true,
-                UseShellExecute = false,
-                CreateNoWindow = true
-            };
-            
-            process.Start();
-            var output = await process.StandardOutput.ReadToEndAsync();
-            await process.WaitForExitAsync();
-            
-            if (process.ExitCode != 0)
-                return All;
-            
-            // Parse the --model line from help output
-            // Format: --model <model>  Set the AI model to use (choices: "model1", "model2", ...)
-            var modelLine = output.Split('\n')
-                .FirstOrDefault(line => line.Contains("--model") && line.Contains("choices:"));
-            
-            if (modelLine == null)
-                return All;
-            
-            // Extract the choices part
-            var choicesStart = modelLine.IndexOf("choices:", StringComparison.OrdinalIgnoreCase);
-            if (choicesStart < 0)
-                return All;
-            
-            var choicesText = modelLine[(choicesStart + 8)..];
-            
-            // Parse quoted model names
-            var models = new List<string>();
-            var inQuote = false;
-            var current = new System.Text.StringBuilder();
-            
-            foreach (var c in choicesText)
-            {
-                if (c == '"')
-                {
-                    if (inQuote && current.Length > 0)
-                    {
-                        models.Add(current.ToString());
-                        current.Clear();
-                    }
-                    inQuote = !inQuote;
-                }
-                else if (inQuote)
-                {
-                    current.Append(c);
-                }
-            }
-            
-            return models.Count > 0 ? [.. models] : All;
+            var models = await GetModelsWithMetadataAsync();
+            return models.Select(m => m.Id).ToArray();
         }
         catch
         {
             return All;
+        }
+    }
+    
+    /// <summary>
+    /// Fetches the list of available models with full metadata from the Copilot SDK.
+    /// Falls back to a basic list if the SDK is unavailable.
+    /// </summary>
+    public static async Task<List<ModelInfo>> GetModelsWithMetadataAsync()
+    {
+        CopilotClient? client = null;
+        try
+        {
+            client = new CopilotClient();
+            await client.StartAsync();
+            
+            var models = await client.ListModelsAsync();
+            
+            // Return models if we got any
+            if (models.Count > 0)
+            {
+                return models;
+            }
+            
+            // Fall back to creating basic ModelInfo from hardcoded list
+            return All.Select(id => new ModelInfo 
+            { 
+                Id = id, 
+                Name = id 
+            }).ToList();
+        }
+        catch
+        {
+            // Fall back to creating basic ModelInfo from hardcoded list
+            return All.Select(id => new ModelInfo 
+            { 
+                Id = id, 
+                Name = id 
+            }).ToList();
+        }
+        finally
+        {
+            if (client != null)
+            {
+                await client.DisposeAsync();
+            }
         }
     }
 }
