@@ -6,6 +6,11 @@ Generate podcast metadata (titles, descriptions, chapters, SRT subtitles) from t
 ![License](https://img.shields.io/badge/license-MIT-green)
 ![GitHub Copilot](https://img.shields.io/badge/GitHub%20Copilot-SDK-000?logo=github)
 
+<img width="896" height="378" alt="Screenshot 2026-02-13 at 11 29 28 AM" src="https://github.com/user-attachments/assets/2dfef3a4-6323-4b18-b1b0-2e17ba2fddef" />
+
+
+<img width="1145" height="682" alt="Screenshot 2026-02-13 at 11 29 09 AM" src="https://github.com/user-attachments/assets/4fe2fe1c-b390-42c0-b730-8aa5e1f03662" />
+
 ## ✨ Features
 
 - **🎯 Title Generation** - Get multiple creative title suggestions for your episode
