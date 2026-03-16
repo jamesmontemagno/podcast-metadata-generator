@@ -72,6 +72,10 @@ cd podcast-metadata-generator
 dotnet build PodcastMetadataGenerator.sln
 ```
 
+## 📚 Additional Docs
+
+- [Using GitHub Copilot SDK built-in APIs in .NET](docs/copilot-sdk-dotnet-built-in-apis.md)
+
 ## 📖 Usage
 
 ### Console App - Interactive Mode

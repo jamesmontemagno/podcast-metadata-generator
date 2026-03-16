@@ -40,15 +40,16 @@ public class SettingsService
         try
         {
             if (!File.Exists(_settingsPath))
-                return new AppSettings();
+                return Normalize(new AppSettings());
             
             var json = await File.ReadAllTextAsync(_settingsPath);
-            return JsonSerializer.Deserialize<AppSettings>(json, JsonOptions) ?? new AppSettings();
+            var settings = JsonSerializer.Deserialize<AppSettings>(json, JsonOptions) ?? new AppSettings();
+            return Normalize(settings);
         }
         catch
         {
             // Return defaults on any error
-            return new AppSettings();
+            return Normalize(new AppSettings());
         }
     }
     
@@ -60,14 +61,15 @@ public class SettingsService
         try
         {
             if (!File.Exists(_settingsPath))
-                return new AppSettings();
+                return Normalize(new AppSettings());
             
             var json = File.ReadAllText(_settingsPath);
-            return JsonSerializer.Deserialize<AppSettings>(json, JsonOptions) ?? new AppSettings();
+            var settings = JsonSerializer.Deserialize<AppSettings>(json, JsonOptions) ?? new AppSettings();
+            return Normalize(settings);
         }
         catch
         {
-            return new AppSettings();
+            return Normalize(new AppSettings());
         }
     }
     
@@ -139,5 +141,14 @@ public class SettingsService
         
         var json = JsonSerializer.Serialize(settingsToSave, JsonOptions);
         File.WriteAllText(_settingsPath, json);
+    }
+
+    private static AppSettings Normalize(AppSettings settings)
+    {
+        settings.Model = string.IsNullOrWhiteSpace(settings.Model)
+            ? AvailableModels.PreferredDefaultModelId
+            : settings.Model.Trim();
+
+        return settings;
     }
 }

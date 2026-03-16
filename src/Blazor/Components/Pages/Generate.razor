@@ -1,5 +1,6 @@
 @page "/generate"
 @rendermode InteractiveServer
+@using GitHub.Copilot.SDK
 @inject AppSettings Settings
 @inject TranscriptParser TranscriptParser
 @inject SrtConverter SrtConverter
@@ -23,6 +24,25 @@
     <div class="alert alert-warning alert-dismissible fade show" role="alert">
         <i class="bi bi-exclamation-triangle me-2"></i>Generation was cancelled. Partial results may be shown below.
         <button type="button" class="btn-close" @onclick="() => _wasCancelled = false"></button>
+    </div>
+}
+
+@if (_permissionRequestCompletionSource != null)
+{
+    <div class="position-fixed top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center bg-dark bg-opacity-50" style="z-index: 2000;">
+        <div class="card shadow-lg" style="max-width: 720px; width: min(720px, 95vw);">
+            <div class="card-header">
+                <h5 class="mb-0">Copilot Permission Request</h5>
+            </div>
+            <div class="card-body">
+                <p class="mb-3">Copilot is requesting permission. Approve or deny the request to continue.</p>
+                <pre class="bg-light border rounded p-3 small mb-0" style="white-space: pre-wrap;">@_pendingPermissionMessage</pre>
+            </div>
+            <div class="card-footer d-flex justify-content-end gap-2">
+                <button class="btn btn-outline-secondary" @onclick="DenyPermissionRequest">Deny</button>
+                <button class="btn btn-primary" @onclick="ApprovePermissionRequest">Approve</button>
+            </div>
+        </div>
     </div>
 }
 
@@ -602,6 +622,8 @@ else if (_result == null || _isGenerating)
     private bool _exportLongDesc = true;
     private bool _exportChapters = true;
     private bool _showExportPanel;
+    private TaskCompletionSource<bool>? _permissionRequestCompletionSource;
+    private string? _pendingPermissionMessage;
     
     private bool HasAnyOptionSelected => _generateTitles || _generateShortDesc || _generateMediumDesc || _generateLongDesc || (_transcript?.HasTimestamps == true && _generateChapters);
     
@@ -714,7 +736,7 @@ else if (_result == null || _isGenerating)
             // Apply episode context
             Settings.EpisodeContext = _episodeContext;
             
-            await using var generator = new MetadataGenerator(Settings);
+            await using var generator = new MetadataGenerator(Settings, RequestPermissionAsync);
             
             var stepIndex = 0;
             
@@ -855,7 +877,40 @@ else if (_result == null || _isGenerating)
     
     private void CancelGeneration()
     {
+        ResolvePermissionRequest(false);
         _cancellationTokenSource?.Cancel();
+    }
+
+    private async Task<bool> RequestPermissionAsync(PermissionRequest request, PermissionInvocation invocation)
+    {
+        var completionSource = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+
+        _pendingPermissionMessage = MetadataGenerator.DescribePermissionRequest(request, invocation);
+        _permissionRequestCompletionSource = completionSource;
+        await InvokeAsync(StateHasChanged);
+
+        return await completionSource.Task;
+    }
+
+    private Task ApprovePermissionRequest()
+    {
+        ResolvePermissionRequest(true);
+        return Task.CompletedTask;
+    }
+
+    private Task DenyPermissionRequest()
+    {
+        ResolvePermissionRequest(false);
+        return Task.CompletedTask;
+    }
+
+    private void ResolvePermissionRequest(bool approved)
+    {
+        var completionSource = _permissionRequestCompletionSource;
+        _permissionRequestCompletionSource = null;
+        _pendingPermissionMessage = null;
+        completionSource?.TrySetResult(approved);
+        InvokeAsync(StateHasChanged);
     }
     
     private void UpdateStep(int stepIndex, string description)
