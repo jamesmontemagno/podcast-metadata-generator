@@ -1,3 +1,4 @@
+using System.Text.Json;
 using System.Text.RegularExpressions;
 using GitHub.Copilot.SDK;
 using PodcastMetadataGenerator.Core.Models;
@@ -11,6 +12,7 @@ namespace PodcastMetadataGenerator.Core.Services;
 public partial class MetadataGenerator : IAsyncDisposable
 {
     private readonly AppSettings _settings;
+    private readonly Func<PermissionRequest, PermissionInvocation, Task<bool>>? _permissionApprovalCallback;
     private CopilotClient? _client;
     private bool _isInitialized;
     
@@ -20,9 +22,12 @@ public partial class MetadataGenerator : IAsyncDisposable
     [GeneratedRegex(@"^(\d{1,2}:\d{2}(?::\d{2})?)\s+(.+)$", RegexOptions.Multiline)]
     private static partial Regex ChapterLineRegex();
     
-    public MetadataGenerator(AppSettings settings)
+    public MetadataGenerator(
+        AppSettings settings,
+        Func<PermissionRequest, PermissionInvocation, Task<bool>>? permissionApprovalCallback = null)
     {
         _settings = settings;
+        _permissionApprovalCallback = permissionApprovalCallback;
     }
     
     /// <summary>
@@ -192,11 +197,19 @@ public partial class MetadataGenerator : IAsyncDisposable
         CopilotSession? session = null;
         try
         {
+            _settings.Model = await AvailableModels.ResolveModelAsync(_settings.Model, cancellationToken);
+
+            if (string.IsNullOrWhiteSpace(_settings.Model))
+            {
+                throw new InvalidOperationException("No models were returned by the Copilot SDK.");
+            }
+
             // Note: Streaming set to true causes serialization issues with large prompts
             // in some SDK versions, so we use streaming only when an onChunk handler is provided
             session = await _client.CreateSessionAsync(new SessionConfig
             {
                 Model = _settings.Model,
+                OnPermissionRequest = HandlePermissionRequestAsync,
                 Streaming = true, // Always use streaming for better responsiveness
                 SystemMessage = new SystemMessageConfig
                 {
@@ -256,6 +269,42 @@ public partial class MetadataGenerator : IAsyncDisposable
         await done.Task;
         
         return responseBuilder.ToString();
+    }
+
+    public static string DescribePermissionRequest(PermissionRequest request, PermissionInvocation invocation)
+    {
+        var details = request.ExtensionData?.Count > 0
+            ? JsonSerializer.Serialize(request.ExtensionData, new JsonSerializerOptions { WriteIndented = true })
+            : "None";
+
+        return $"Kind: {request.Kind}\n" +
+               $"Session: {invocation.SessionId}\n" +
+               $"Tool Call: {request.ToolCallId ?? "N/A"}\n" +
+               $"Details: {details}";
+    }
+
+    private async Task<PermissionRequestResult> HandlePermissionRequestAsync(
+        PermissionRequest request,
+        PermissionInvocation invocation)
+    {
+        if (_permissionApprovalCallback == null)
+        {
+            return new PermissionRequestResult
+            {
+                Kind = PermissionRequestResultKind.DeniedCouldNotRequestFromUser,
+                Rules = []
+            };
+        }
+
+        var approved = await _permissionApprovalCallback(request, invocation);
+
+        return new PermissionRequestResult
+        {
+            Kind = approved
+                ? PermissionRequestResultKind.Approved
+                : PermissionRequestResultKind.DeniedInteractivelyByUser,
+            Rules = []
+        };
     }
     
     /// <summary>

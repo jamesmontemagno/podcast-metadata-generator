@@ -1,118 +1,86 @@
-using System.Diagnostics;
 using GitHub.Copilot.SDK;
 
 namespace PodcastMetadataGenerator.Core.Models;
 
 /// <summary>
-/// Available AI models for generation from GitHub Copilot CLI.
+/// Available AI models from the GitHub Copilot SDK.
 /// </summary>
 public static class AvailableModels
 {
-    // Models from Copilot CLI --model choices (run `copilot --help` to see current list)
-    // GPT Models
-    public const string Gpt5 = "gpt-5";
-    public const string Gpt51 = "gpt-5.1";
-    public const string Gpt52 = "gpt-5.2";
-    public const string Gpt5Mini = "gpt-5-mini";
-    public const string Gpt51Codex = "gpt-5.1-codex";
-    public const string Gpt51CodexMax = "gpt-5.1-codex-max";
-    public const string Gpt51CodexMini = "gpt-5.1-codex-mini";
-    public const string Gpt52Codex = "gpt-5.2-codex";
-    public const string Gpt41 = "gpt-4.1";
-    
-    // Claude Models
-    public const string ClaudeSonnet45 = "claude-sonnet-4.5";
-    public const string ClaudeHaiku45 = "claude-haiku-4.5";
-    public const string ClaudeOpus45 = "claude-opus-4.5";
-    public const string ClaudeSonnet4 = "claude-sonnet-4";
-    
-    // Gemini Models
-    public const string Gemini3ProPreview = "gemini-3-pro-preview";
-    
-    /// <summary>
-    /// Default hardcoded list of models. Use GetModelsAsync() to fetch from CLI.
-    /// </summary>
-    public static readonly string[] All =
-    [
-        // Fast/Default models first
-        Gpt5,
-        Gpt51,
-        Gpt5Mini,
-        ClaudeSonnet45,
-        ClaudeHaiku45,
-        // More powerful models
-        Gpt52,
-        Gpt51Codex,
-        Gpt51CodexMax,
-        Gpt52Codex,
-        ClaudeOpus45,
-        ClaudeSonnet4,
-        Gpt41,
-        Gpt51CodexMini,
-        Gemini3ProPreview
-    ];
-    
-    public static string Default => Gpt5;
-    
+    public const string PreferredDefaultModelId = "gpt-4.1";
+
     /// <summary>
     /// Fetches the list of available models from the Copilot SDK.
-    /// Falls back to the hardcoded list if the SDK is unavailable.
     /// </summary>
-    public static async Task<string[]> GetModelsFromCliAsync()
-    {
-        try
-        {
-            var models = await GetModelsWithMetadataAsync();
-            return models.Select(m => m.Id).ToArray();
-        }
-        catch
-        {
-            return All;
-        }
-    }
-    
+    public static async Task<string[]> GetModelsFromCliAsync(CancellationToken cancellationToken = default)
+        => (await GetModelsWithMetadataAsync(cancellationToken)).Select(m => m.Id).ToArray();
+
     /// <summary>
     /// Fetches the list of available models with full metadata from the Copilot SDK.
-    /// Falls back to a basic list if the SDK is unavailable.
     /// </summary>
-    public static async Task<List<ModelInfo>> GetModelsWithMetadataAsync()
+    public static async Task<List<ModelInfo>> GetModelsWithMetadataAsync(CancellationToken cancellationToken = default)
     {
-        CopilotClient? client = null;
         try
         {
-            client = new CopilotClient();
+            await using var client = new CopilotClient();
             await client.StartAsync();
-            
-            var models = await client.ListModelsAsync();
-            
-            // Return models if we got any
-            if (models.Count > 0)
-            {
-                return models;
-            }
-            
-            // Fall back to creating basic ModelInfo from hardcoded list
-            return All.Select(id => new ModelInfo 
-            { 
-                Id = id, 
-                Name = id 
-            }).ToList();
+
+            var models = await client.ListModelsAsync(cancellationToken);
+            return models.ToList();
         }
         catch
         {
-            // Fall back to creating basic ModelInfo from hardcoded list
-            return All.Select(id => new ModelInfo 
-            { 
-                Id = id, 
-                Name = id 
-            }).ToList();
+            return [];
         }
-        finally
+    }
+
+    /// <summary>
+    /// Resolves a valid model id from the Copilot SDK, preferring the provided selection.
+    /// </summary>
+    public static async Task<string> ResolveModelAsync(string? selectedModel, CancellationToken cancellationToken = default)
+    {
+        var normalizedModel = selectedModel?.Trim();
+        var models = await GetModelsWithMetadataAsync(cancellationToken);
+
+        if (models.Count == 0)
         {
-            if (client != null)
+            return normalizedModel ?? string.Empty;
+        }
+
+        if (!string.IsNullOrWhiteSpace(normalizedModel))
+        {
+            var matchingModel = models.FirstOrDefault(m =>
+                string.Equals(m.Id, normalizedModel, StringComparison.OrdinalIgnoreCase));
+
+            if (matchingModel is not null)
             {
-                await client.DisposeAsync();
+                return matchingModel.Id;
             }
+        }
+
+        var preferredDefaultModel = models.FirstOrDefault(m =>
+            string.Equals(m.Id, PreferredDefaultModelId, StringComparison.OrdinalIgnoreCase));
+
+        if (preferredDefaultModel is not null)
+        {
+            return preferredDefaultModel.Id;
+        }
+
+        return models[0].Id;
+    }
+
+    /// <summary>
+    /// Resolves a valid model id from the Copilot SDK, preferring the provided selection.
+    /// </summary>
+    public static string ResolveModel(string? selectedModel)
+    {
+        try
+        {
+            return ResolveModelAsync(selectedModel).ConfigureAwait(false).GetAwaiter().GetResult();
+        }
+        catch
+        {
+            return selectedModel?.Trim() ?? string.Empty;
         }
     }
 }
@@ -128,7 +96,7 @@ public class AppSettings
     /// <summary>
     /// Selected AI model for generation.
     /// </summary>
-    public string Model { get; set; } = AvailableModels.Default;
+    public string Model { get; set; } = string.Empty;
     
     #endregion
     

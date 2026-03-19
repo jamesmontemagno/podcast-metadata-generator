@@ -1,3 +1,4 @@
+using GitHub.Copilot.SDK;
 using Spectre.Console;
 using PodcastMetadataGenerator.Core.Models;
 using PodcastMetadataGenerator.Core.Services;
@@ -814,6 +815,12 @@ public class AppWorkflow
                         {
                             return await AvailableModels.GetModelsWithMetadataAsync();
                         });
+
+                    if (modelInfos.Count == 0)
+                    {
+                        ConsoleUI.ShowWarning("No models were returned by the Copilot SDK.");
+                        break;
+                    }
                     
                     // Create display mapping
                     var modelChoices = modelInfos.ToDictionary(
@@ -866,6 +873,7 @@ public class AppWorkflow
                     if (AnsiConsole.Confirm("Reset all settings to defaults?", defaultValue: false))
                     {
                         _settings = new AppSettings();
+                        _settings.Model = await AvailableModels.ResolveModelAsync(_settings.Model);
                         ConsoleUI.ShowSuccess("Settings reset to defaults");
                     }
                     break;
@@ -1018,7 +1026,7 @@ public class AppWorkflow
     {
         if (_generator == null)
         {
-            _generator = new MetadataGenerator(_settings);
+            _generator = new MetadataGenerator(_settings, RequestPermissionAsync);
         }
         
         await AnsiConsole.Status()
@@ -1028,6 +1036,20 @@ public class AppWorkflow
             {
                 await _generator.InitializeAsync();
             });
+    }
+
+    private Task<bool> RequestPermissionAsync(PermissionRequest request, PermissionInvocation invocation)
+    {
+        AnsiConsole.WriteLine();
+        AnsiConsole.Write(new Panel(new Text(MetadataGenerator.DescribePermissionRequest(request, invocation)))
+        {
+            Header = new PanelHeader("[yellow]Copilot Permission Request[/]"),
+            Border = BoxBorder.Rounded,
+            BorderStyle = new Style(Color.Yellow)
+        });
+
+        var approved = AnsiConsole.Confirm("Approve this request?", defaultValue: false);
+        return Task.FromResult(approved);
     }
     
     private async Task CleanupAsync()

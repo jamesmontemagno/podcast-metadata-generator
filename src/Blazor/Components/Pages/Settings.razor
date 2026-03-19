@@ -8,24 +8,6 @@
 
 <h1>⚙️ Settings</h1>
 
-@if (_isLoading)
-{
-    <div class="loading-overlay-card">
-        <div class="card">
-            <div class="card-body text-center py-5">
-                <div class="loading-spinner mb-3">
-                    <div class="spinner-ring"></div>
-                    <i class="bi bi-gear loading-icon spin"></i>
-                </div>
-                <h5 class="loading-text">Loading Settings</h5>
-                <p class="text-muted mb-0">Fetching available AI models...</p>
-            </div>
-        </div>
-    </div>
-}
-else
-{
-
 @if (_showSaved)
 {
     <div class="alert alert-success alert-dismissible fade show" role="alert">
@@ -44,17 +26,40 @@ else
             <div class="card-body">
                 <div class="mb-3">
                     <label class="form-label">Model</label>
-                    <select class="form-select" @bind="AppSettings.Model">
-                        @foreach (var model in _models)
-                        {
-                            var displayText = model.Name;
-                            if (model.Billing?.Multiplier > 0)
+                    @if (_isLoadingModels)
+                    {
+                        <div class="form-control d-flex align-items-center" aria-busy="true">
+                            <div class="spinner-border spinner-border-sm me-2" role="status"></div>
+                            <span>Loading available models...</span>
+                        </div>
+                    }
+                    else if (!string.IsNullOrWhiteSpace(_modelLoadError))
+                    {
+                        <div class="alert alert-warning mb-2" role="alert">
+                            @_modelLoadError
+                        </div>
+                        <input type="text" class="form-control" @bind="AppSettings.Model" />
+                    }
+                    else if (_models.Count == 0)
+                    {
+                        <select class="form-select" disabled>
+                            <option>No models available from the Copilot SDK</option>
+                        </select>
+                    }
+                    else
+                    {
+                        <select class="form-select" @bind="AppSettings.Model">
+                            @foreach (var model in _models)
                             {
-                                displayText = $"{model.Name} (×{model.Billing.Multiplier:0.##})";
+                                var displayText = model.Name;
+                                if (model.Billing?.Multiplier > 0)
+                                {
+                                    displayText = $"{model.Name} (×{model.Billing.Multiplier:0.##})";
+                                }
+                                <option value="@model.Id">@displayText</option>
                             }
-                            <option value="@model.Id">@displayText</option>
-                        }
-                    </select>
+                        </select>
+                    }
                     <small class="form-text text-muted">
                         Multiplier indicates relative cost of the model
                     </small>
@@ -157,20 +162,49 @@ else
     </button>
 </div>
 
-} @* End of else block *@
-
 @code {
     private List<ModelInfo> _models = [];
     private bool _showSaved;
-    private bool _isLoading = true;
+    private bool _isLoadingModels = true;
+    private string? _modelLoadError;
     
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (firstRender)
         {
-            _models = await AvailableModels.GetModelsWithMetadataAsync();
-            _isLoading = false;
+            await LoadModelsAsync();
             await InvokeAsync(StateHasChanged);
+        }
+    }
+
+    private async Task LoadModelsAsync()
+    {
+        try
+        {
+            using var cancellationTokenSource = new CancellationTokenSource(TimeSpan.FromSeconds(10));
+
+            _models = await AvailableModels.GetModelsWithMetadataAsync(cancellationTokenSource.Token);
+
+            if (_models.Count > 0)
+            {
+                AppSettings.Model = ResolveSelectedModel(_models, AppSettings.Model);
+            }
+            else
+            {
+                _modelLoadError = "Couldn't load available models from the Copilot SDK. You can still type a model manually.";
+            }
+        }
+        catch (OperationCanceledException)
+        {
+            _modelLoadError = "Loading models timed out. You can still type a model manually.";
+        }
+        catch
+        {
+            _modelLoadError = "Couldn't load available models from the Copilot SDK. You can still type a model manually.";
+        }
+        finally
+        {
+            _isLoadingModels = false;
         }
     }
     
@@ -186,7 +220,9 @@ else
     {
         var defaults = new AppSettings();
         
-        AppSettings.Model = defaults.Model;
+        AppSettings.Model = _models.Count > 0
+            ? ResolveSelectedModel(_models, null)
+            : AvailableModels.PreferredDefaultModelId;
         AppSettings.TitleCount = defaults.TitleCount;
         AppSettings.TitleMaxWords = defaults.TitleMaxWords;
         AppSettings.ShortDescriptionWords = defaults.ShortDescriptionWords;
@@ -197,5 +233,26 @@ else
         AppSettings.ChaptersPer30Min = defaults.ChaptersPer30Min;
         AppSettings.ChapterTitleMaxWords = defaults.ChapterTitleMaxWords;
         // Keep podcast name and host names
+    }
+
+    private static string ResolveSelectedModel(IReadOnlyList<ModelInfo> models, string? selectedModel)
+    {
+        var normalizedModel = selectedModel?.Trim();
+
+        if (!string.IsNullOrWhiteSpace(normalizedModel))
+        {
+            var matchingModel = models.FirstOrDefault(m =>
+                string.Equals(m.Id, normalizedModel, StringComparison.OrdinalIgnoreCase));
+
+            if (matchingModel is not null)
+            {
+                return matchingModel.Id;
+            }
+        }
+
+        var preferredDefaultModel = models.FirstOrDefault(m =>
+            string.Equals(m.Id, AvailableModels.PreferredDefaultModelId, StringComparison.OrdinalIgnoreCase));
+
+        return preferredDefaultModel?.Id ?? models[0].Id;
     }
 }
