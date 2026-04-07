@@ -100,16 +100,23 @@ await using (session)
     });
 
         var prompt = $"""
-Create YouTube chapters from this timestamped transcript.
+Create podcast metadata from this timestamped transcript.
+
+Return exactly this structure:
+Title: <suggested episode title>
+Abstract: <exactly 2 sentences>
+Chapters:
+MM:SS Title Here
+HH:MM:SS Title Here
 
 Rules:
 - Only create chapters for major topic shifts.
 - First chapter must be 00:00.
 - Use the segment START timestamp for each chapter.
-- Return only chapter lines in one of these formats:
+- Keep chapter lines in one of these formats:
     MM:SS Title Here
     HH:MM:SS Title Here
-- Do not include numbering, bullets, or commentary.
+- Do not include numbering, bullets, or extra commentary.
 
 Transcript:
 {transcriptForPrompt}
@@ -121,7 +128,16 @@ Transcript:
     await session.SendAsync(new MessageOptions { Prompt = prompt });
     await done.Task;
 
-    var chapters = ParseChapterLines(responseBuilder.ToString());
+    var responseText = responseBuilder.ToString();
+    var titleSuggestion = ParseTitleSuggestion(responseText);
+    var abstractText = ParseAbstract(responseText);
+    var chapters = ParseChapterLines(responseText);
+
+    Console.WriteLine("\n\nTitle Suggestion:\n");
+    Console.WriteLine(titleSuggestion);
+
+    Console.WriteLine("\nAbstract:\n");
+    Console.WriteLine(abstractText);
 
     Console.WriteLine("\n\nYouTube Chapters:\n");
     foreach (var chapter in chapters)
@@ -299,10 +315,11 @@ static string SrtToYouTube(string srtTimestamp)
 
 static List<(string Timestamp, string Title)> ParseChapterLines(string response)
 {
+    var chapterBlock = ExtractChaptersBlock(response);
     var chapterRegex = new Regex(@"^(\d{1,2}:\d{2}(?::\d{2})?)\s+(.+)$", RegexOptions.Multiline);
     var chapters = new List<(string Timestamp, string Title)>();
 
-    foreach (Match match in chapterRegex.Matches(response))
+    foreach (Match match in chapterRegex.Matches(chapterBlock))
     {
         var timestamp = NormalizeTimestamp(match.Groups[1].Value.Trim());
         var title = match.Groups[2].Value.Trim();
@@ -319,6 +336,55 @@ static List<(string Timestamp, string Title)> ParseChapterLines(string response)
     }
 
     return chapters;
+}
+
+static string ParseTitleSuggestion(string response)
+{
+    var titleMatch = Regex.Match(response, @"^\s*Title\s*:\s*(.+)$", RegexOptions.Multiline | RegexOptions.IgnoreCase);
+    if (titleMatch.Success)
+    {
+        var title = titleMatch.Groups[1].Value.Trim();
+        if (!string.IsNullOrWhiteSpace(title))
+        {
+            return title;
+        }
+    }
+
+    return "Untitled Episode";
+}
+
+static string ParseAbstract(string response)
+{
+    var abstractBlockMatch = Regex.Match(
+        response,
+        @"^\s*Abstract\s*:\s*(.+?)(?:\r?\n\s*Chapters\s*:|\z)",
+        RegexOptions.Singleline | RegexOptions.Multiline | RegexOptions.IgnoreCase);
+
+    if (abstractBlockMatch.Success)
+    {
+        var normalized = Regex.Replace(abstractBlockMatch.Groups[1].Value, @"\s+", " ").Trim();
+        if (!string.IsNullOrWhiteSpace(normalized))
+        {
+            return normalized;
+        }
+    }
+
+    return "No abstract was returned.";
+}
+
+static string ExtractChaptersBlock(string response)
+{
+    var chaptersBlockMatch = Regex.Match(
+        response,
+        @"^\s*Chapters\s*:\s*(.*)$",
+        RegexOptions.Singleline | RegexOptions.Multiline | RegexOptions.IgnoreCase);
+
+    if (chaptersBlockMatch.Success)
+    {
+        return chaptersBlockMatch.Groups[1].Value;
+    }
+
+    return response;
 }
 
 static string NormalizeTimestamp(string raw)
