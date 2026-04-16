@@ -1,4 +1,3 @@
-using System.Text.Json;
 using System.Text.RegularExpressions;
 using GitHub.Copilot.SDK;
 using PodcastMetadataGenerator.Core.Models;
@@ -273,14 +272,32 @@ public partial class MetadataGenerator : IAsyncDisposable
 
     public static string DescribePermissionRequest(PermissionRequest request, PermissionInvocation invocation)
     {
-        var details = request.ExtensionData?.Count > 0
-            ? JsonSerializer.Serialize(request.ExtensionData, new JsonSerializerOptions { WriteIndented = true })
-            : "None";
+        var sessionInfo = $"Session: {invocation.SessionId}";
 
-        return $"Kind: {request.Kind}\n" +
-               $"Session: {invocation.SessionId}\n" +
-               $"Tool Call: {request.ToolCallId ?? "N/A"}\n" +
-               $"Details: {details}";
+        string FormatBase(string? toolCallId, string extraDetails) =>
+            $"Kind: {request.Kind}\n{sessionInfo}\nTool Call: {toolCallId ?? "N/A"}\n{extraDetails}";
+
+        return request switch
+        {
+            PermissionRequestShell shell =>
+                FormatBase(shell.ToolCallId, $"Command: {shell.FullCommandText ?? "N/A"}\nIntention: {shell.Intention ?? "N/A"}"),
+            PermissionRequestWrite write =>
+                FormatBase(write.ToolCallId, $"File: {write.FileName ?? "N/A"}\nIntention: {write.Intention ?? "N/A"}"),
+            PermissionRequestRead read =>
+                FormatBase(read.ToolCallId, $"Path: {read.Path ?? "N/A"}\nIntention: {read.Intention ?? "N/A"}"),
+            PermissionRequestUrl url =>
+                FormatBase(url.ToolCallId, $"URL: {url.Url ?? "N/A"}\nIntention: {url.Intention ?? "N/A"}"),
+            PermissionRequestMemory memory =>
+                FormatBase(memory.ToolCallId, $"Subject: {memory.Subject ?? "N/A"}"),
+            PermissionRequestMcp mcp =>
+                FormatBase(mcp.ToolCallId, $"Server: {mcp.ServerName ?? "N/A"}\nTool: {mcp.ToolName ?? "N/A"}"),
+            PermissionRequestCustomTool customTool =>
+                FormatBase(customTool.ToolCallId, $"Tool: {customTool.ToolName ?? "N/A"}\nDescription: {customTool.ToolDescription ?? "N/A"}"),
+            PermissionRequestHook hook =>
+                FormatBase(hook.ToolCallId, $"Hook: {hook.ToolName ?? "N/A"}\nMessage: {hook.HookMessage ?? "N/A"}"),
+            _ =>
+                $"Kind: {request.Kind}\n{sessionInfo}"
+        };
     }
 
     private async Task<PermissionRequestResult> HandlePermissionRequestAsync(
