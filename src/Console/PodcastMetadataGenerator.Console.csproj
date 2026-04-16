@@ -12,7 +12,7 @@
     <PackAsTool>true</PackAsTool>
     <ToolCommandName>podcast-metadata-generator</ToolCommandName>
     <PackageId>PodcastMetadataGenerator</PackageId>
-    <PackageVersion>1.2.0</PackageVersion>
+    <PackageVersion>1.2.1</PackageVersion>
     <Authors>James Montemagno</Authors>
     <Description>Generate podcast metadata (titles, descriptions, chapters, SRT) from transcripts using GitHub Copilot AI</Description>
     <PackageTags>podcast;metadata;ai;copilot;transcripts;chapters;srt</PackageTags>

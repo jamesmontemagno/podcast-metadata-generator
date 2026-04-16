@@ -1,5 +1,6 @@
 using System.Text.RegularExpressions;
 using GitHub.Copilot.SDK;
+using PodcastMetadataGenerator.Core.Copilot;
 using PodcastMetadataGenerator.Core.Models;
 using PodcastMetadataGenerator.Core.Prompts;
 
@@ -38,7 +39,7 @@ public partial class MetadataGenerator : IAsyncDisposable
         
         try
         {
-            _client = new CopilotClient();
+            _client = CopilotClientFactory.CreateClient();
             await _client.StartAsync();
             _isInitialized = true;
         }

@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using GitHub.Copilot.SDK;
+using PodcastMetadataGenerator.Core.Copilot;
 
 namespace PodcastMetadataGenerator.Core.Services;
 
@@ -94,7 +95,7 @@ public class CopilotAuthService
         CopilotClient? client = null;
         try
         {
-            client = new CopilotClient();
+            client = CopilotClientFactory.CreateClient();
             await client.StartAsync();
             
             var authResponse = await client.GetAuthStatusAsync();

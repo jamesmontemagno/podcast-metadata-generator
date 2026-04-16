@@ -1,4 +1,5 @@
 using GitHub.Copilot.SDK;
+using PodcastMetadataGenerator.Core.Copilot;
 
 namespace PodcastMetadataGenerator.Core.Models;
 
@@ -22,7 +23,7 @@ public static class AvailableModels
     {
         try
         {
-            await using var client = new CopilotClient();
+            await using var client = CopilotClientFactory.CreateClient();
             await client.StartAsync();
 
             var models = await client.ListModelsAsync(cancellationToken);
