@@ -30,6 +30,11 @@ jobs:
           echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
           echo "Releasing version: $VERSION"
 
+      - name: Sync project PackageVersion
+        run: |
+          sed -i -E "s|<PackageVersion>[^<]+</PackageVersion>|<PackageVersion>${{ steps.version.outputs.VERSION }}</PackageVersion>|" src/Console/PodcastMetadataGenerator.Console.csproj
+          echo "Updated PackageVersion in csproj to ${{ steps.version.outputs.VERSION }}"
+
       - name: Restore dependencies
         run: dotnet restore PodcastMetadataGenerator.sln
 
