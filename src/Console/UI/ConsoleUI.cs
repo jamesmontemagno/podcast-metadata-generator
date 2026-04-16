@@ -145,17 +145,14 @@ public static class ConsoleUI
     public static void ShowPanel(string title, string content, Color borderColor = default)
     {
         var color = borderColor == default ? Color.Blue : borderColor;
-        
-        var panel = new Panel(Markup.Escape(content))
-        {
-            Header = new PanelHeader($"[bold] {Markup.Escape(title)} [/]"),
-            Border = BoxBorder.Rounded,
-            BorderStyle = new Style(color),
-            Padding = new Padding(2, 1),
-            Expand = true
-        };
-        
-        AnsiConsole.Write(panel);
+        var separator = BuildSeparator();
+
+        AnsiConsole.Write(new Text(separator, new Style(color)));
+        AnsiConsole.WriteLine();
+        AnsiConsole.MarkupLine($"[bold]{Markup.Escape(title)}[/]");
+        AnsiConsole.WriteLine(content);
+        AnsiConsole.Write(new Text(separator, new Style(color)));
+        AnsiConsole.WriteLine();
         AnsiConsole.WriteLine();
     }
     
@@ -165,18 +162,21 @@ public static class ConsoleUI
     public static void ShowMarkupPanel(string title, string markupContent, Color borderColor = default)
     {
         var color = borderColor == default ? Color.Blue : borderColor;
-        
-        var panel = new Panel(new Markup(markupContent))
-        {
-            Header = new PanelHeader($"[bold] {Markup.Escape(title)} [/]"),
-            Border = BoxBorder.Rounded,
-            BorderStyle = new Style(color),
-            Padding = new Padding(2, 1),
-            Expand = true
-        };
-        
-        AnsiConsole.Write(panel);
+        var separator = BuildSeparator();
+
+        AnsiConsole.Write(new Text(separator, new Style(color)));
         AnsiConsole.WriteLine();
+        AnsiConsole.MarkupLine($"[bold]{Markup.Escape(title)}[/]");
+        AnsiConsole.MarkupLine(markupContent);
+        AnsiConsole.Write(new Text(separator, new Style(color)));
+        AnsiConsole.WriteLine();
+        AnsiConsole.WriteLine();
+    }
+
+    private static string BuildSeparator()
+    {
+        var width = Math.Max(20, AnsiConsole.Profile.Width);
+        return new string('-', width);
     }
     
     /// <summary>

@@ -19,6 +19,41 @@ public class AppWorkflow
     
     private Transcript? _transcript;
     private GenerationResult _result = new();
+
+    private static string BuildStreamSeparator()
+    {
+        var width = Math.Max(20, AnsiConsole.Profile.Width);
+        return new string('-', width);
+    }
+
+    private static string BuildStreamBlock(string content)
+    {
+        var separator = BuildStreamSeparator();
+        return $"{separator}{Environment.NewLine}{content}{Environment.NewLine}{separator}";
+    }
+
+    private static Panel CreateStreamingPanel(string header, string content, bool isMarkupContent)
+    {
+        var block = BuildStreamBlock(content);
+        if (isMarkupContent)
+        {
+            return new Panel(new Markup(block))
+            {
+                Header = new PanelHeader($"[bold] {Markup.Escape(header)} [/]"),
+                Border = BoxBorder.None,
+                Padding = new Padding(0, 0),
+                Expand = true
+            };
+        }
+
+        return new Panel(new Text(block))
+        {
+            Header = new PanelHeader($"[bold] {Markup.Escape(header)} [/]"),
+            Border = BoxBorder.None,
+            Padding = new Padding(0, 0),
+            Expand = true
+        };
+    }
     
     public AppWorkflow()
     {
@@ -305,14 +340,7 @@ public class AppWorkflow
             .AutoClear(false)
             .StartAsync(async ctx =>
             {
-                var panel = new Panel(new Markup("[grey]Waiting for response...[/]"))
-                {
-                    Header = new PanelHeader("[bold] Generating Titles [/]"),
-                    Border = BoxBorder.Rounded,
-                    BorderStyle = new Style(Color.Blue),
-                    Padding = new Padding(1, 0),
-                    Expand = true
-                };
+                var panel = CreateStreamingPanel("Generating Titles", "[grey]Waiting for response...[/]", true);
                 ctx.UpdateTarget(panel);
                 
                 // Start generation on a background thread
@@ -340,28 +368,14 @@ public class AppWorkflow
                     
                     if (!string.IsNullOrEmpty(currentText))
                     {
-                        panel = new Panel(Markup.Escape(currentText))
-                        {
-                            Header = new PanelHeader("[bold] Generating Titles [/]"),
-                            Border = BoxBorder.Rounded,
-                            BorderStyle = new Style(Color.Blue),
-                            Padding = new Padding(1, 0),
-                            Expand = true
-                        };
+                        panel = CreateStreamingPanel("Generating Titles", currentText, false);
                         ctx.UpdateTarget(panel);
                     }
                     else
                     {
                         // Animate waiting message
                         var dots = new string('.', (animationFrame % 3) + 1).PadRight(3);
-                        panel = new Panel(new Markup($"[grey]Waiting for response{dots}[/]"))
-                        {
-                            Header = new PanelHeader("[bold] Generating Titles [/]"),
-                            Border = BoxBorder.Rounded,
-                            BorderStyle = new Style(Color.Blue),
-                            Padding = new Padding(1, 0),
-                            Expand = true
-                        };
+                        panel = CreateStreamingPanel("Generating Titles", $"[grey]Waiting for response{dots}[/]", true);
                         ctx.UpdateTarget(panel);
                         animationFrame++;
                     }
@@ -372,14 +386,7 @@ public class AppWorkflow
                 // Final update
                 _result.Titles = await generationTask;
                 
-                panel = new Panel(Markup.Escape(responseText))
-                {
-                    Header = new PanelHeader("[bold] Generating Titles [/]"),
-                    Border = BoxBorder.Rounded,
-                    BorderStyle = new Style(Color.Blue),
-                    Padding = new Padding(1, 0),
-                    Expand = true
-                };
+                panel = CreateStreamingPanel("Generating Titles", responseText, false);
                 ctx.UpdateTarget(panel);
             });
         
@@ -417,14 +424,7 @@ public class AppWorkflow
                 .AutoClear(false)
                 .StartAsync(async ctx =>
                 {
-                    var panel = new Panel(new Markup("[grey]Waiting for response...[/]"))
-                    {
-                        Header = new PanelHeader($"[bold] Generating {length} Description [/]"),
-                        Border = BoxBorder.Rounded,
-                        BorderStyle = new Style(Color.Yellow),
-                        Padding = new Padding(1, 0),
-                        Expand = true
-                    };
+                    var panel = CreateStreamingPanel($"Generating {length} Description", "[grey]Waiting for response...[/]", true);
                     ctx.UpdateTarget(panel);
                     
                     // Start generation on a background thread
@@ -454,28 +454,14 @@ public class AppWorkflow
                         
                         if (!string.IsNullOrEmpty(currentText))
                         {
-                            panel = new Panel(Markup.Escape(currentText))
-                            {
-                                Header = new PanelHeader($"[bold] Generating {length} Description [/]"),
-                                Border = BoxBorder.Rounded,
-                                BorderStyle = new Style(Color.Yellow),
-                                Padding = new Padding(1, 0),
-                                Expand = true
-                            };
+                            panel = CreateStreamingPanel($"Generating {length} Description", currentText, false);
                             ctx.UpdateTarget(panel);
                         }
                         else
                         {
                             // Animate waiting message
                             var dots = new string('.', (animationFrame % 3) + 1).PadRight(3);
-                            panel = new Panel(new Markup($"[grey]Waiting for response{dots}[/]"))
-                            {
-                                Header = new PanelHeader($"[bold] Generating {length} Description [/]"),
-                                Border = BoxBorder.Rounded,
-                                BorderStyle = new Style(Color.Yellow),
-                                Padding = new Padding(1, 0),
-                                Expand = true
-                            };
+                            panel = CreateStreamingPanel($"Generating {length} Description", $"[grey]Waiting for response{dots}[/]", true);
                             ctx.UpdateTarget(panel);
                             animationFrame++;
                         }
@@ -486,14 +472,7 @@ public class AppWorkflow
                     // Final update
                     _result.Descriptions[length] = await generationTask;
                     
-                    panel = new Panel(Markup.Escape(responseText))
-                    {
-                        Header = new PanelHeader($"[bold] Generating {length} Description [/]"),
-                        Border = BoxBorder.Rounded,
-                        BorderStyle = new Style(Color.Yellow),
-                        Padding = new Padding(1, 0),
-                        Expand = true
-                    };
+                    panel = CreateStreamingPanel($"Generating {length} Description", responseText, false);
                     ctx.UpdateTarget(panel);
                 });
             
@@ -530,14 +509,7 @@ public class AppWorkflow
             .AutoClear(false)
             .StartAsync(async ctx =>
             {
-                var panel = new Panel(new Markup("[grey]Waiting for response...[/]"))
-                {
-                    Header = new PanelHeader("[bold] Generating Chapters [/]"),
-                    Border = BoxBorder.Rounded,
-                    BorderStyle = new Style(Color.Green),
-                    Padding = new Padding(1, 0),
-                    Expand = true
-                };
+                var panel = CreateStreamingPanel("Generating Chapters", "[grey]Waiting for response...[/]", true);
                 ctx.UpdateTarget(panel);
                 
                 // Start generation on a background thread
@@ -565,28 +537,14 @@ public class AppWorkflow
                     
                     if (!string.IsNullOrEmpty(currentText))
                     {
-                        panel = new Panel(Markup.Escape(currentText))
-                        {
-                            Header = new PanelHeader("[bold] Generating Chapters [/]"),
-                            Border = BoxBorder.Rounded,
-                            BorderStyle = new Style(Color.Green),
-                            Padding = new Padding(1, 0),
-                            Expand = true
-                        };
+                        panel = CreateStreamingPanel("Generating Chapters", currentText, false);
                         ctx.UpdateTarget(panel);
                     }
                     else
                     {
                         // Animate waiting message
                         var dots = new string('.', (animationFrame % 3) + 1).PadRight(3);
-                        panel = new Panel(new Markup($"[grey]Waiting for response{dots}[/]"))
-                        {
-                            Header = new PanelHeader("[bold] Generating Chapters [/]"),
-                            Border = BoxBorder.Rounded,
-                            BorderStyle = new Style(Color.Green),
-                            Padding = new Padding(1, 0),
-                            Expand = true
-                        };
+                        panel = CreateStreamingPanel("Generating Chapters", $"[grey]Waiting for response{dots}[/]", true);
                         ctx.UpdateTarget(panel);
                         animationFrame++;
                     }
@@ -597,14 +555,7 @@ public class AppWorkflow
                 // Final update
                 _result.Chapters = await generationTask;
                 
-                panel = new Panel(Markup.Escape(responseText))
-                {
-                    Header = new PanelHeader("[bold] Generating Chapters [/]"),
-                    Border = BoxBorder.Rounded,
-                    BorderStyle = new Style(Color.Green),
-                    Padding = new Padding(1, 0),
-                    Expand = true
-                };
+                panel = CreateStreamingPanel("Generating Chapters", responseText, false);
                 ctx.UpdateTarget(panel);
             });
         
