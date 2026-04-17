@@ -58,7 +58,13 @@ copilot
 
 ## 🚀 Installation
 
-### As a .NET Tool (Recommended)
+### Just run it with .NET 10+ (Recommended)
+
+```bash
+dnx PodcastMetadataGenerator
+```
+
+### As a .NET Tool
 
 ```bash
 dotnet tool install -g PodcastMetadataGenerator
