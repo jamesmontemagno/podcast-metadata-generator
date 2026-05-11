@@ -46,7 +46,7 @@ if (!authStatus.IsAuthenticated)
     return;
 }
 
-var selectedModel = await PickModelAsync(client, preferredModel: "gpt-4.1");
+var selectedModel = await PickModelAsync(client, preferredModel: "gpt-5.4-mini");
 if (string.IsNullOrWhiteSpace(selectedModel))
 {
     Console.WriteLine("No Copilot models are available in this environment.");

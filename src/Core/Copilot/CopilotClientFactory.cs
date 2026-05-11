@@ -3,16 +3,21 @@ using GitHub.Copilot.SDK;
 namespace PodcastMetadataGenerator.Core.Copilot;
 
 /// <summary>
-/// Creates Copilot SDK clients with deterministic CLI path resolution.
+/// Creates Copilot SDK clients.
 /// </summary>
 public static class CopilotClientFactory
 {
     /// <summary>
-    /// Creates a CopilotClient using an explicit CLI path to avoid incorrect bundled runtime resolution.
+    /// Creates a CopilotClient, using the SDK-bundled CLI unless an explicit CLI path is configured.
     /// </summary>
     public static CopilotClient CreateClient()
     {
         var cliPath = ResolveCliPath();
+
+        if (string.IsNullOrWhiteSpace(cliPath))
+        {
+            return new CopilotClient();
+        }
 
         return new CopilotClient(new CopilotClientOptions
         {
@@ -22,7 +27,6 @@ public static class CopilotClientFactory
 
     private static string ResolveCliPath()
     {
-        // Allow explicit override while keeping a cross-platform default that resolves from PATH.
         var explicitPath = Environment.GetEnvironmentVariable("COPILOT_CLI_PATH");
         if (!string.IsNullOrWhiteSpace(explicitPath))
         {
@@ -35,6 +39,6 @@ public static class CopilotClientFactory
             return legacyPath;
         }
 
-        return "copilot";
+        return string.Empty;
     }
 }

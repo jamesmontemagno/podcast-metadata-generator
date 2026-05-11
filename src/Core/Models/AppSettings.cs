@@ -8,7 +8,7 @@ namespace PodcastMetadataGenerator.Core.Models;
 /// </summary>
 public static class AvailableModels
 {
-    public const string PreferredDefaultModelId = "gpt-4.1";
+    public const string PreferredDefaultModelId = "gpt-5.4-mini";
 
     /// <summary>
     /// Fetches the list of available models from the Copilot SDK.

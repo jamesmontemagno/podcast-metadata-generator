@@ -47,11 +47,11 @@ public static class ConsoleUI
     }
     
     /// <summary>
-    /// Shows Copilot CLI status.
+    /// Shows Copilot SDK runtime status.
     /// </summary>
     public static void ShowCopilotStatus(CopilotAuthService.CopilotStatus status)
     {
-        AnsiConsole.MarkupLine("[bold]Copilot CLI Status[/]");
+        AnsiConsole.MarkupLine("[bold]Copilot Runtime Status[/]");
         AnsiConsole.WriteLine();
         
         var table = new Table()
@@ -60,8 +60,8 @@ public static class ConsoleUI
             .AddColumn("Status");
         
         table.AddRow(
-            "Copilot CLI Installed",
-            status.IsInstalled ? "[green]✓ Installed[/]" : "[red]✗ Not Installed[/]");
+            "Copilot Runtime Available",
+            status.IsInstalled ? "[green]✓ Available[/]" : "[red]✗ Unavailable[/]");
         
         table.AddRow(
             "GH_TOKEN Environment Variable",
@@ -77,7 +77,7 @@ public static class ConsoleUI
         // Show success message if ready
         if (status.IsInstalled && (status.IsTokenSet || status.IsAuthenticated))
         {
-            AnsiConsole.MarkupLine("[green]✓ Copilot CLI is ready to use![/]");
+            AnsiConsole.MarkupLine("[green]✓ Copilot runtime is ready to use![/]");
             AnsiConsole.WriteLine();
             return;
         }
@@ -90,10 +90,8 @@ public static class ConsoleUI
         
         if (!status.IsInstalled)
         {
-            AnsiConsole.MarkupLine("[yellow]To install Copilot CLI:[/]");
-            AnsiConsole.MarkupLine("  [cyan]npm install -g @github/copilot[/]");
-            AnsiConsole.MarkupLine("  [dim]or[/]");
-            AnsiConsole.MarkupLine("  [cyan]brew install gh && gh extension install github/gh-copilot[/]");
+            AnsiConsole.MarkupLine("[yellow]To start the Copilot runtime:[/]");
+            AnsiConsole.MarkupLine("  [cyan]Restart the app, or set COPILOT_CLI_PATH to a known working Copilot CLI executable.[/]");
             AnsiConsole.WriteLine();
         }
         

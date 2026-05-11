@@ -309,7 +309,7 @@ public partial class MetadataGenerator : IAsyncDisposable
         {
             return new PermissionRequestResult
             {
-                Kind = PermissionRequestResultKind.DeniedCouldNotRequestFromUser,
+                Kind = PermissionRequestResultKind.UserNotAvailable,
                 Rules = []
             };
         }
@@ -320,7 +320,7 @@ public partial class MetadataGenerator : IAsyncDisposable
         {
             Kind = approved
                 ? PermissionRequestResultKind.Approved
-                : PermissionRequestResultKind.DeniedInteractivelyByUser,
+                : PermissionRequestResultKind.Rejected,
             Rules = []
         };
     }
