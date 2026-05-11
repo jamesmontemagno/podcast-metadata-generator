@@ -386,3 +386,7 @@ FodyWeavers.xsd
 
 # Application specific
 output/
+samples/YouTubeChaptersDemo/YouTubeChaptersDemo.csproj.lscache
+src/Blazor/PodcastMetadataGenerator.Blazor.csproj.lscache
+src/Console/PodcastMetadataGenerator.Console.csproj.lscache
+src/Core/PodcastMetadataGenerator.Core.csproj.lscache
