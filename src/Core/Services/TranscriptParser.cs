@@ -49,7 +49,7 @@ public partial class TranscriptParser
     /// </summary>
     public Transcript ParseContent(string fileName, string content)
     {
-        var lines = content.Split(['\n', '\r'], StringSplitOptions.RemoveEmptyEntries);
+        var lines = SplitLines(content);
         var format = DetectFormat(lines);
         
         // Try to parse structured formats, fall back to plain text
@@ -79,6 +79,14 @@ public partial class TranscriptParser
     /// Detects the format of the transcript by scanning the first 50 lines.
     /// Returns PlainText if no structured format is detected.
     /// </summary>
+    private static string[] SplitLines(string content)
+    {
+        return content
+            .Replace("\r\n", "\n")
+            .Replace("\r", "\n")
+            .Split('\n', StringSplitOptions.None);
+    }
+
     private TranscriptFormat DetectFormat(string[] lines)
     {
         var linesToCheck = lines.Take(50).ToArray();
