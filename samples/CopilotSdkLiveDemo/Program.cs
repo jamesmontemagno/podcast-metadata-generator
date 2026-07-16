@@ -4,8 +4,10 @@ const string Model = "gpt-5.4-mini";
 
 Console.WriteLine("Copilot SDK hello world\n");
 
+// Step 1: Start the Copilot client.
 CopilotClient client;
 
+// Step 2: Check that Copilot is authenticated.
 var isAuthenticated = false;
 
 if (!isAuthenticated)
@@ -16,9 +18,10 @@ if (!isAuthenticated)
 
 var complete = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
 
+// Step 3: Create a streaming session.
 CopilotSession session = null!;
 
-// Stream events from the assistant.
+// Step 4: Stream events from the assistant.
 session.On<SessionEvent>(evt =>
 {
     switch (evt)
@@ -43,7 +46,7 @@ session.On<SessionEvent>(evt =>
 
 Console.WriteLine($"Using model: {Model}\n");
 
-// Send the first message.
+// Step 5: Send the first message.
 
 
 await complete.Task;
