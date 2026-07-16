@@ -120,14 +120,6 @@ Transcript:
 
     await session.SendAsync(new MessageOptions { Prompt = prompt });
     await done.Task;
-
-    var chapters = ParseChapterLines(responseBuilder.ToString());
-
-    Console.WriteLine("\n\nYouTube Chapters:\n");
-    foreach (var chapter in chapters)
-    {
-        Console.WriteLine($"{chapter.Timestamp} {chapter.Title}");
-    }
 }
 
 #region Demo-Friendly Helpers
