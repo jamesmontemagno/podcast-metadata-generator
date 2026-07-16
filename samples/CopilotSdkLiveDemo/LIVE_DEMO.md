@@ -9,52 +9,112 @@
 dotnet run --project samples/CopilotSdkLiveDemo
 ```
 
-3. Choose a model and one of the ten latest episodes, then approve `get_merge_conflict_episode` with `y`.
+## Act One: Hello World
 
-## Live Story
+Start with [Program.cs](Program.cs). It deliberately has named placeholders for `client`, `isAuthenticated`, and `session`. Leave the streaming event handler and completion wait in place.
 
-The application asks the presenter which Copilot model and recent Merge Conflict episode to use. It then gives the agent two application-owned capabilities: list the ten newest episodes and retrieve one episode from the official RSS feed. The agent uses the chosen episode's data to create launch copy without inventing details.
+### 1. Start The Client
 
-## Type These Sections
+At `CopilotClient client;`, type:
 
-`Program.cs` contains all console, authentication, selection, streaming, XML parsing, and permission boilerplate. Type only the three marked blocks.
+```csharp
+client = new CopilotClient();
+await client.StartAsync();
+```
 
-### Part 1: Tool
+Say: "The client is my connection to the Copilot runtime. I start it explicitly, so the application owns its lifecycle."
+
+### 2. Check Authentication
+
+Replace `var isAuthenticated = false;` with:
+
+```csharp
+var isAuthenticated = (await client.GetAuthStatusAsync()).IsAuthenticated;
+```
+
+Say: "Before creating a session, I can ask the runtime whether this machine is signed in."
+
+### 3. Create The Session
+
+At `CopilotSession session = null!;`, type:
+
+```csharp
+session = await client.CreateSessionAsync(new SessionConfig
+{
+    Model = Model,
+    Streaming = true
+});
+```
+
+Say: "The session is the conversation. I chose the model, enabled streaming, and the event handler below already prints each text fragment as it arrives."
+
+### 4. Send Hello World
+
+Under `// Send the first message.`, type:
+
+```csharp
+await session.SendAsync(new MessageOptions
+{
+    Prompt = "Hello world! In one sentence, say what the Copilot SDK helps a .NET app do."
+});
+```
+
+Say: "That is the basic shape: start a client, create a session, listen for events, and send a message."
+
+Expected output: a streamed one-sentence answer, followed by the existing `SessionIdleEvent` completing the program.
+
+## Act Two: Turn It Into A Podcast Assistant
+
+After Hello World, add the prewritten helpers in `Helpers` and `Tools` to turn the same session into a grounded podcast workflow.
+
+### 1. Let The Presenter Choose
+
+Replace the fixed `Model` use with a picker, then load and select one of the ten newest episodes:
+
+```csharp
+var model = await ModelSelector.PickAsync(client, "gpt-5.4-mini");
+var latestEpisodes = await MergeConflictEpisodeTool.GetLatestAsync();
+var selectedEpisode = EpisodeSelector.Pick(latestEpisodes);
+var selectedEpisodeNumber = selectedEpisode.EpisodeNumber;
+```
+
+Say: "This keeps the demo live. I can choose a model in the room, then choose from the real ten newest Merge Conflict episodes."
+
+### 2. Give The Session Capabilities
+
+Create the application-owned tools:
 
 ```csharp
 var episodeTool = MergeConflictEpisodeTool.CreateEpisodeTool();
 var latestEpisodesTool = MergeConflictEpisodeTool.CreateLatestEpisodesTool();
 ```
 
-Say: "The model cannot call arbitrary application code. I deliberately expose one typed, read-only capability."
-
-### Part 2: Session
+Extend `SessionConfig` with:
 
 ```csharp
-await using var session = await client.CreateSessionAsync(new SessionConfig
+Model = model,
+Tools = [episodeTool, latestEpisodesTool],
+OnPermissionRequest = PermissionPrompt.RequestAsync,
+SystemMessage = new SystemMessageConfig
 {
-    Model = model,
-    Streaming = true,
-    Tools = [episodeTool, latestEpisodesTool],
-    OnPermissionRequest = RequestPermissionAsync
-});
+    Mode = SystemMessageMode.Replace,
+    Content = "You are the launch assistant for the Merge Conflict podcast. Use supplied episode facts only."
+}
 ```
 
-Say: "My application owns the session and explicitly grants that capability. The SDK manages the Copilot runtime connection."
+Say: "The model does not get arbitrary access to my application. I grant two narrow, typed capabilities and remain the approval point before a tool executes."
 
-### Part 3: Grounded Prompt
+### 3. Replace The Prompt
+
+Replace Hello World with the selected, grounded episode request:
 
 ```csharp
 await session.SendAsync(new MessageOptions
 {
-    Prompt = $"Use get_merge_conflict_episode for episode {selectedEpisodeNumber}. Return a headline and a sponsor-safe post. Use only tool facts."
+    Prompt = $"Use get_merge_conflict_episode for episode {selectedEpisodeNumber}. Return exactly a social headline and a sponsor-safe post under 280 characters. Use only facts returned by the tool; do not invent guests, sponsors, topics, or links."
 });
 ```
 
-Say: "The model decides to call the tool. I approve it, the app retrieves the official feed, and the response is grounded in that returned data."
+Say: "The agent decides to call the episode tool, I approve the read-only lookup, and its response is grounded in the official feed rather than invented details."
 
-## Rehearsal
-
-For a repeatable rehearsal, choose episode `523` from the menu. The episode tool still accepts any optional episode number, while the new latest-episodes tool always returns the newest ten feed entries.
-
-Expected console milestones: model selection, episode selection, `[Tool call started]`, approval prompt, `[Tool call complete]`, then streamed launch copy.
+Expected milestones: model selection, ten-episode selection, `[Tool call started]`, approval prompt, `[Tool call complete]`, then streamed launch copy.

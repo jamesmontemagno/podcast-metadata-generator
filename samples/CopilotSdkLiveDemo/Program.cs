@@ -1,51 +1,24 @@
-using CopilotSdkLiveDemo.Helpers;
-using CopilotSdkLiveDemo.Tools;
 using GitHub.Copilot;
 
-Console.WriteLine("Merge Conflict launch assistant\n");
+const string Model = "gpt-5.4-mini";
 
-await using var client = new CopilotClient();
-await client.StartAsync();
+Console.WriteLine("Copilot SDK hello world\n");
 
-var authStatus = await client.GetAuthStatusAsync();
-if (!authStatus.IsAuthenticated)
+CopilotClient client;
+
+var isAuthenticated = false;
+
+if (!isAuthenticated)
 {
     Console.WriteLine("Copilot is not authenticated. Run 'copilot auth login' and try again.");
     return;
 }
 
-var model = await ModelSelector.PickAsync(client, "gpt-5.4-mini");
-if (string.IsNullOrWhiteSpace(model))
-{
-    Console.WriteLine("No Copilot models are available in this environment.");
-    return;
-}
-
-var latestEpisodes = await MergeConflictEpisodeTool.GetLatestAsync();
-var selectedEpisode = EpisodeSelector.Pick(latestEpisodes);
-var selectedEpisodeNumber = selectedEpisode.EpisodeNumber
-    ?? throw new InvalidOperationException("The selected episode does not have an episode number.");
-
 var complete = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
 
-// Part 1: Give the agent a capability owned by this application.
-var episodeTool = MergeConflictEpisodeTool.CreateEpisodeTool();
-var latestEpisodesTool = MergeConflictEpisodeTool.CreateLatestEpisodesTool();
+CopilotSession session = null!;
 
-// Part 2: Create the agent session.
-await using var session = await client.CreateSessionAsync(new SessionConfig
-{
-    Model = model,
-    Streaming = true,
-    Tools = [episodeTool, latestEpisodesTool],
-    OnPermissionRequest = PermissionPrompt.RequestAsync,
-    SystemMessage = new SystemMessageConfig
-    {
-        Mode = SystemMessageMode.Replace,
-        Content = "You are the launch assistant for the Merge Conflict podcast. Use supplied episode facts only."
-    }
-});
-
+// Stream events from the assistant.
 session.On<SessionEvent>(evt =>
 {
     switch (evt)
@@ -68,13 +41,9 @@ session.On<SessionEvent>(evt =>
     }
 });
 
-Console.WriteLine($"\nUsing model: {model}");
-Console.WriteLine($"Selected episode: {selectedEpisode.Title}\n");
+Console.WriteLine($"Using model: {Model}\n");
 
-// Part 3: Ask the agent to use its new capability.
-Console.WriteLine("Streaming launch copy...\n");
-await session.SendAsync(new MessageOptions
-{
-    Prompt = $"Use get_merge_conflict_episode for episode {selectedEpisodeNumber}. Return exactly a social headline and a sponsor-safe post under 280 characters. Use only facts returned by the tool; do not invent guests, sponsors, topics, or links."
-});
+// Send the first message.
+
+
 await complete.Task;
