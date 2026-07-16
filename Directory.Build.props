@@ -1,0 +1,6 @@
+<Project>
+  <PropertyGroup Condition="'$(Configuration)' == '' Or '$(Configuration)' == 'Debug'">
+    <CopilotCliBinaryPath Condition="'$(CopilotCliBinaryPath)' == '' And '$(COPILOT_CLI_BINARY_PATH)' != ''">$(COPILOT_CLI_BINARY_PATH)</CopilotCliBinaryPath>
+    <CopilotCliBinaryPath Condition="'$(CopilotCliBinaryPath)' == '' And '$(OS)' == 'Windows_NT' And Exists('$(LOCALAPPDATA)\Microsoft\WinGet\Links\copilot.exe')">$(LOCALAPPDATA)\Microsoft\WinGet\Links\copilot.exe</CopilotCliBinaryPath>
+  </PropertyGroup>
+</Project>
