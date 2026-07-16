@@ -1,6 +1,6 @@
 using System.Text;
 using System.Text.RegularExpressions;
-using GitHub.Copilot.SDK;
+using GitHub.Copilot;
 
 #region Read in transcript
 
@@ -72,7 +72,7 @@ await using (session)
     var responseBuilder = new StringBuilder();
     var done = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
 
-    session.On(evt =>
+    session.On<SessionEvent>(evt =>
     {
         switch (evt)
         {

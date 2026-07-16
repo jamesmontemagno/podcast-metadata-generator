@@ -1,4 +1,4 @@
-using GitHub.Copilot.SDK;
+using GitHub.Copilot;
 using PodcastMetadataGenerator.Core.Copilot;
 
 namespace PodcastMetadataGenerator.Core.Models;

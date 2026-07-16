@@ -113,7 +113,7 @@ The SDK is available in multiple languages:
 - **Python** (PyPI)
 - **Go**
 
-> **Note:** The Copilot SDK is currently in **technical preview**. Check out the [GitHub repo](https://github.com/github/copilot-sdk) for the latest updates and to provide feedback.
+> **Note:** The Copilot SDK is generally available and follows semantic versioning. Check out the [GitHub repo](https://github.com/github/copilot-sdk) for the latest updates and to provide feedback.
 
 The SDK provides:
 
@@ -125,7 +125,7 @@ The SDK provides:
 Here's how simple it is to send a prompt:
 
 ```csharp
-using GitHub.Copilot.SDK;
+using GitHub.Copilot;
 
 var client = new CopilotClient();
 await client.StartAsync();

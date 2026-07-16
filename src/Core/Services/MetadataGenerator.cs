@@ -1,5 +1,6 @@
 using System.Text.RegularExpressions;
-using GitHub.Copilot.SDK;
+using GitHub.Copilot;
+using GitHub.Copilot.Rpc;
 using PodcastMetadataGenerator.Core.Copilot;
 using PodcastMetadataGenerator.Core.Models;
 using PodcastMetadataGenerator.Core.Prompts;
@@ -234,7 +235,7 @@ public partial class MetadataGenerator : IAsyncDisposable
             done.TrySetCanceled(cancellationToken);
         });
         
-        session.On(evt =>
+        session.On<SessionEvent>(evt =>
         {
             switch (evt)
             {
@@ -301,29 +302,23 @@ public partial class MetadataGenerator : IAsyncDisposable
         };
     }
 
-    private async Task<PermissionRequestResult> HandlePermissionRequestAsync(
+#pragma warning disable GHCP001
+    private async Task<PermissionDecision> HandlePermissionRequestAsync(
         PermissionRequest request,
         PermissionInvocation invocation)
     {
         if (_permissionApprovalCallback == null)
         {
-            return new PermissionRequestResult
-            {
-                Kind = PermissionRequestResultKind.UserNotAvailable,
-                Rules = []
-            };
+            return PermissionDecision.UserNotAvailable();
         }
 
         var approved = await _permissionApprovalCallback(request, invocation);
 
-        return new PermissionRequestResult
-        {
-            Kind = approved
-                ? PermissionRequestResultKind.Approved
-                : PermissionRequestResultKind.Rejected,
-            Rules = []
-        };
+        return approved
+            ? PermissionDecision.ApproveOnce()
+            : PermissionDecision.Reject();
     }
+        #pragma warning restore GHCP001
     
     /// <summary>
     /// Sanitizes text to avoid JSON serialization issues.

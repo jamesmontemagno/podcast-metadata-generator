@@ -1,4 +1,4 @@
-using GitHub.Copilot.SDK;
+using GitHub.Copilot;
 using System.Runtime.InteropServices;
 
 namespace PodcastMetadataGenerator.Core.Copilot;
@@ -22,7 +22,7 @@ public static class CopilotClientFactory
 
         return new CopilotClient(new CopilotClientOptions
         {
-            CliPath = cliPath
+            Connection = RuntimeConnection.ForStdio(path: cliPath)
         });
     }
 

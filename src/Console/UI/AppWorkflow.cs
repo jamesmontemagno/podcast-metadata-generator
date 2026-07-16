@@ -1,4 +1,4 @@
-using GitHub.Copilot.SDK;
+using GitHub.Copilot;
 using Spectre.Console;
 using PodcastMetadataGenerator.Core.Models;
 using PodcastMetadataGenerator.Core.Services;
@@ -963,7 +963,7 @@ public class AppWorkflow
         return true;
     }
     
-    private static string FormatModelName(GitHub.Copilot.SDK.ModelInfo model)
+    private static string FormatModelName(ModelInfo model)
     {
         var name = model.Name;
         if (model.Billing?.Multiplier > 0)

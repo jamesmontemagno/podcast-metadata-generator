@@ -1,12 +1,13 @@
 # Using GitHub Copilot SDK built-in APIs in .NET
 
-This note is based on the latest `main` branch of [`github/copilot-sdk`](https://github.com/github/copilot-sdk) and its current .NET package, `GitHub.Copilot.SDK`.
+This note is based on the `v1.0.7` release of [`github/copilot-sdk`](https://github.com/github/copilot-sdk) and its .NET package, `GitHub.Copilot.SDK`.
 
 ## Prerequisites
 
 - .NET 8 or later
-- GitHub Copilot CLI installed and available on `PATH`
-- A signed-in Copilot CLI session, unless you are using BYOK provider settings
+- A GitHub Copilot subscription and authentication, unless you are using BYOK provider settings
+
+The .NET package bundles the compatible Copilot runtime. You can optionally install the Copilot CLI separately to authenticate interactively or set `COPILOT_CLI_PATH` to use a specific executable.
 
 Install the SDK:
 
@@ -30,10 +31,9 @@ Common things you do with it:
 
 Useful options in `CopilotClientOptions` include:
 
-- `CliPath`
-- `CliUrl`
-- `AutoStart`
-- `Cwd`
+- `Connection` with `RuntimeConnection.ForStdio(path: ...)`, `ForTcp(...)`, or `ForUri(...)`
+- `WorkingDirectory`
+- `BaseDirectory`
 - `GitHubToken`
 - `Telemetry`
 
@@ -69,7 +69,7 @@ Core APIs:
 ## Minimal example
 
 ```csharp
-using GitHub.Copilot.SDK;
+using GitHub.Copilot;
 
 await using var client = new CopilotClient();
 
@@ -80,7 +80,7 @@ var session = await client.CreateSessionAsync(new SessionConfig
 
 var finished = new TaskCompletionSource();
 
-using var subscription = session.On(evt =>
+using var subscription = session.On<SessionEvent>(evt =>
 {
     if (evt is AssistantMessageEvent message)
     {
@@ -120,7 +120,7 @@ Use this pattern when you want the agent to stay read-only or avoid shell access
 The .NET SDK can expose application-specific tools back to the agent. The upstream examples use `AIFunctionFactory.Create` from `Microsoft.Extensions.AI`.
 
 ```csharp
-using GitHub.Copilot.SDK;
+using GitHub.Copilot;
 using Microsoft.Extensions.AI;
 using System.ComponentModel;
 
@@ -167,6 +167,6 @@ For most .NET apps, the normal flow is:
 
 ## Notes
 
-- The SDK is currently in technical preview.
-- The CLI must be installed separately.
+- The SDK is generally available and follows semantic versioning.
+- The .NET package bundles the compatible Copilot runtime.
 - The upstream README notes that the SDK supports multiple auth approaches, including logged-in CLI auth, GitHub tokens, and BYOK provider configuration.
