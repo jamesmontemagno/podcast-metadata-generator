@@ -29,8 +29,8 @@ session.On<SessionEvent>(evt =>
         case AssistantMessageDeltaEvent delta:
             Console.Write(delta.Data.DeltaContent);
             break;
-        case ToolExecutionStartEvent:
-            Console.WriteLine("\n[Tool call started]");
+        case ToolExecutionStartEvent start:
+            Console.WriteLine($"[Tool call started] {start.Data.ToolName} {start.Data.Arguments}");
             break;
         case ToolExecutionCompleteEvent:
             Console.WriteLine("\n[Tool call complete]\n");
