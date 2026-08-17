@@ -43,6 +43,7 @@ public class WhisperModelService
         if (!File.Exists(modelPath))
         {
             var temporaryPath = modelPath + ".download";
+            Exception? downloadException = null;
             try
             {
                 await using var modelStream = await WhisperGgmlDownloader.Default.GetGgmlModelAsync(
@@ -62,10 +63,14 @@ public class WhisperModelService
 
                 File.Move(temporaryPath, modelPath, overwrite: true);
             }
-            catch
+            catch (Exception ex)
             {
-                File.Delete(temporaryPath);
+                downloadException = ex;
                 throw;
+            }
+            finally
+            {
+                TemporaryFileCleanup.Delete(temporaryPath, downloadException);
             }
         }
 

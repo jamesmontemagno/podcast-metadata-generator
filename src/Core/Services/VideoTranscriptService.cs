@@ -39,6 +39,7 @@ public class VideoTranscriptService
                 "No initialized Whisper model is available. Install one from Settings before transcribing video.");
 
         var temporaryWavPath = Path.Combine(Path.GetTempPath(), $"podcast-metadata-{Guid.NewGuid():N}.wav");
+        Exception? transcriptionException = null;
         try
         {
             var extraction = await RunFfmpegAsync(
@@ -89,9 +90,14 @@ public class VideoTranscriptService
             progress?.Report(new VideoTranscriptionProgress(audioDuration, audioDuration));
             return srt.ToString();
         }
+        catch (Exception ex)
+        {
+            transcriptionException = ex;
+            throw;
+        }
         finally
         {
-            File.Delete(temporaryWavPath);
+            TemporaryFileCleanup.Delete(temporaryWavPath, transcriptionException);
         }
     }
 
@@ -213,7 +219,6 @@ public class VideoTranscriptService
             throw new FileNotFoundException("The selected input file was not found.", path);
         }
     }
-
     private sealed record FfmpegResult(int ExitCode, string Error);
 }
 
